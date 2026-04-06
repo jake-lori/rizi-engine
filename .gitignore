@@ -22,7 +22,8 @@ dumpitem.py
 *.pyc
 *.sav
 
-
+/!docs/Pokédex.xlsx
+/!docs/Pokédex-Copy.xlsx
 /armips/asm/offset.s
 /tools/genleveldatatxt
 /tools/gengfxnarc.exe
@@ -88,3 +89,4 @@ tools/swav2swar.exe
 
 *.gbapal
 *.4bpp
+changelog

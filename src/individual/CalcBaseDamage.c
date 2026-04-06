@@ -73,84 +73,70 @@ static const u8 HeldItemPowerUpTable[][2]={
 #endif
 };
 
-static const u16 IronFistMovesTable[] = {
-    MOVE_BULLET_PUNCH,
-    MOVE_COMET_PUNCH,
-    MOVE_DIZZY_PUNCH,
-    MOVE_DOUBLE_IRON_BASH,
-    MOVE_DRAIN_PUNCH,
-    MOVE_DYNAMIC_PUNCH,
-    MOVE_FIRE_PUNCH,
-    MOVE_FOCUS_PUNCH,
-    MOVE_HAMMER_ARM,
-    MOVE_HEADLONG_RUSH,
-    MOVE_ICE_HAMMER,
-    MOVE_ICE_PUNCH,
-    MOVE_JET_PUNCH,
-    MOVE_MACH_PUNCH,
-    MOVE_MEGA_PUNCH,
-    MOVE_METEOR_MASH,
-    MOVE_PLASMA_FISTS,
-    MOVE_POWER_UP_PUNCH,
-    MOVE_RAGE_FIST,
-    MOVE_SHADOW_PUNCH,
-    MOVE_SKY_UPPERCUT,
-    MOVE_SURGING_STRIKES,
-    MOVE_THUNDER_PUNCH,
-    MOVE_WICKED_BLOW,
-};
+// this has been moved to src/battle/other_battle_calculators.c so it can be used in 
+extern const u16 PunchingMovesTable[24];
 
 static const u16 StrongJawMovesTable[] = {
-        MOVE_BITE,
-        MOVE_CRUNCH,
-        MOVE_FIRE_FANG,
-        MOVE_FISHIOUS_REND,
-        MOVE_HYPER_FANG,
-        MOVE_ICE_FANG,
-        MOVE_JAW_LOCK,
-        MOVE_POISON_FANG,
-        MOVE_PSYCHIC_FANGS,
-        MOVE_THUNDER_FANG,
+    MOVE_BITE,
+    MOVE_CRUNCH,
+    MOVE_FIRE_FANG,
+    MOVE_FISHIOUS_REND,
+    MOVE_HYPER_FANG,
+    MOVE_ICE_FANG,
+    MOVE_JAW_LOCK,
+    MOVE_POISON_FANG,
+    MOVE_PSYCHIC_FANGS,
+    MOVE_THUNDER_FANG,
 };
 
 static const u16 MegaLauncherMovesTable[] = {
-        MOVE_AURA_SPHERE,
-        MOVE_DARK_PULSE,
-        MOVE_DRAGON_PULSE,
-        MOVE_HEAL_PULSE,
-        MOVE_ORIGIN_PULSE,
-        MOVE_TERRAIN_PULSE,
-        MOVE_WATER_PULSE,
+    MOVE_AURA_SPHERE,
+    MOVE_DARK_PULSE,
+    MOVE_DRAGON_PULSE,
+    MOVE_HEAL_PULSE,
+    MOVE_ORIGIN_PULSE,
+    MOVE_TERRAIN_PULSE,
+    MOVE_WATER_PULSE,
 };
 
 static const u16 SharpnessMovesTable[] = {
-        MOVE_AERIAL_ACE,
-        MOVE_AIR_CUTTER,
-        MOVE_AIR_SLASH,
-        MOVE_AQUA_CUTTER,
-        MOVE_BEHEMOTH_BLADE,
-        MOVE_BITTER_BLADE,
-        MOVE_CEASELESS_EDGE,
-        MOVE_CROSS_POISON,
-        MOVE_CUT,
-        MOVE_FURY_CUTTER,
-        MOVE_KOWTOW_CLEAVE,
-        MOVE_LEAF_BLADE,
-        MOVE_NIGHT_SLASH,
-        MOVE_POPULATION_BOMB,
-        MOVE_PSYBLADE,
-        MOVE_PSYCHO_CUT,
-        MOVE_RAZOR_SHELL,
-        MOVE_RAZOR_LEAF,
-        MOVE_SACRED_SWORD,
-        MOVE_SECRET_SWORD,
-        MOVE_SLASH,
-        MOVE_SOLAR_BLADE,
-        MOVE_STONE_AXE,
-        MOVE_X_SCISSOR,
+    MOVE_AERIAL_ACE,
+    MOVE_AIR_CUTTER,
+    MOVE_AIR_SLASH,
+    MOVE_AQUA_CUTTER,
+    MOVE_BEHEMOTH_BLADE,
+    MOVE_BITTER_BLADE,
+    MOVE_CEASELESS_EDGE,
+    MOVE_CROSS_POISON,
+    MOVE_CUT,
+    MOVE_FURY_CUTTER,
+    MOVE_KOWTOW_CLEAVE,
+    MOVE_LEAF_BLADE,
+    MOVE_NIGHT_SLASH,
+    MOVE_POPULATION_BOMB,
+    MOVE_PSYBLADE,
+    MOVE_PSYCHO_CUT,
+    MOVE_RAZOR_SHELL,
+    MOVE_RAZOR_LEAF,
+    MOVE_SACRED_SWORD,
+    MOVE_SECRET_SWORD,
+    MOVE_SLASH,
+    MOVE_SOLAR_BLADE,
+    MOVE_STONE_AXE,
+    MOVE_X_SCISSOR,
 };
 
-
+static const u16 KickMovesTable[] = {
+    MOVE_BLAZE_KICK,
+    MOVE_HIGH_JUMP_KICK,
+    MOVE_JUMP_KICK,
+    MOVE_LOW_KICK,
+    MOVE_MEGA_KICK,
+    MOVE_DOUBLE_KICK,
+    MOVE_TRIPLE_KICK,
+    MOVE_AXE_KICK,
+    MOVE_LOW_SWEEP,
+};
 
 
 int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
@@ -178,7 +164,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     struct sDamageCalc DefendingMon;
 
     switch (moveno) {
-        // Handle Body Press - Attack is derived from Defense
+        // handle body press - attack is derived from defense
         case MOVE_BODY_PRESS:
             attack = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_DEF, NULL);
             atkstate = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_STATE_DEF, NULL) - 6;
@@ -227,7 +213,10 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
 
     battle_type = BattleTypeGet(bw);
 
-    if (((MoldBreakerAbilityCheck(sp, attacker, defender, ABILITY_DISGUISE) == TRUE || MoldBreakerAbilityCheck(sp, attacker, defender, ABILITY_ICE_FACE) == TRUE) && GetMoveSplit(sp, moveno) == SPLIT_PHYSICAL) && sp->battlemon[defender].form_no == 0)
+    if ((MoldBreakerAbilityCheck(sp, attacker, defender, ABILITY_DISGUISE) == TRUE && sp->battlemon[defender].form_no == 0))
+        return 0;
+
+    if (((MoldBreakerAbilityCheck(sp, attacker, defender, ABILITY_ICE_FACE) == TRUE) && GetMoveSplit(sp, moveno) == SPLIT_PHYSICAL) && sp->battlemon[defender].form_no == 0)
         return 0;
 
     if (pow == 0)
@@ -254,12 +243,18 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     movesplit = GetMoveSplit(sp, moveno);
 
     // handle huge power + pure power
-    if ((AttackingMon.ability == ABILITY_HUGE_POWER) || (AttackingMon.ability == ABILITY_PURE_POWER))
+    if (AttackingMon.ability == ABILITY_PURE_POWER)
         attack = attack * 2;
+
+    // handle cephelalgia surge
+    if (AttackingMon.ability == ABILITY_CEPHALALGIA_SURGE)
+    {
+        sp_attack = sp_attack * 2;
+    }
 
     // handle slow start
     if ((AttackingMon.ability == ABILITY_SLOW_START)
-     && ((BattleWorkMonDataGet(bw, sp, 3, 0) - BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_SLOW_START_COUNTER, NULL)) < 5))
+     && ((BattleWorkMonDataGet(bw, sp, 3, 0) - BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_SLOW_START_COUNTER, NULL)) < 3))
         attack /= 2;
 
     // handle defeatist
@@ -292,12 +287,11 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
         movepower = movepower * 130 / 100;
     }
 
-//    // handle punk rock TODO uncomment
-//    if (AttackingMon.ability == ABILITY_PUNK_ROCK && IsMoveSoundBased(sp->current_move_index))
-//    {
-//        movepower = movepower * 130 / 100;
-//        break;
-//    }
+    // handle punk rock TODO uncomment
+    if (AttackingMon.ability == ABILITY_PUNK_ROCK && IsMoveSoundBased(sp->current_move_index))
+    {
+        movepower = movepower * 130 / 100;
+    }
 
 
     // type boosting held items
@@ -340,12 +334,12 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     if ((DefendingMon.item_held_effect == HOLD_EFFECT_DITTO_DEF_UP) && (DefendingMon.species == SPECIES_DITTO))
         defense *= 2;
 
-    // handle Gorilla Tactics
+    // handle gorilla tactics
     if (AttackingMon.ability == ABILITY_GORILLA_TACTICS) {
         attack = attack * 150 / 100;
     }    
 
-    // Handle Assault Vest
+    // handle assault vest
     if ((DefendingMon.item_held_effect == HOLD_EFFECT_SPDEF_BOOST_NO_STATUS_MOVES)) {
         sp_defense = sp_defense * 150 / 100;
     }
@@ -409,7 +403,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     }
 
     // handle punching glove
-    if ((AttackingMon.item_held_effect == HOLD_EFFECT_INCREASE_PUNCHING_MOVE_DMG) && IsElementInArray(IronFistMovesTable, (u16 *)&moveno, NELEMS(IronFistMovesTable), sizeof(IronFistMovesTable[0])))
+    if ((AttackingMon.item_held_effect == HOLD_EFFECT_INCREASE_PUNCHING_MOVE_DMG) && IsElementInArray(PunchingMovesTable, (u16 *)&moveno, NELEMS(PunchingMovesTable), sizeof(PunchingMovesTable[0])))
     {
         movepower = movepower * (100 + AttackingMon.item_power) / 100;
     }
@@ -456,7 +450,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     // handle toxic boost
     if ((AttackingMon.ability == ABILITY_TOXIC_BOOST) && ((AttackingMon.condition & STATUS_FLAG_BADLY_POISONED) || (AttackingMon.condition & STATUS_FLAG_POISONED)))
     {
-        attack = attack * 150 / 100;
+        attack = attack * 130 / 100;
     }
 
     // handle flare boost
@@ -466,14 +460,14 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     }
 
     // handle tough claws
-    if ((AttackingMon.ability == ABILITY_TOUGH_CLAWS) && (sp->moveTbl[sp->current_move_index].flag & FLAG_CONTACT))
+    if ((AttackingMon.ability == ABILITY_TOUGH_CLAWS) && (IsContactBeingMade(bw, sp)))
     {
         movepower = movepower * 130 / 100;
     }
 
-    // Handle Fluffy
+    // handle fluffy
     if (DefendingMon.ability == ABILITY_FLUFFY) {
-        if (sp->moveTbl[sp->current_move_index].flag & FLAG_CONTACT) {
+        if (IsContactBeingMade(bw, sp)) {
             movepower = movepower * 50 / 100;
         }
 
@@ -570,6 +564,12 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
         movepower = movepower * 150 / 100;
     }
 
+    // handle harvest winds 
+    if (AttackingMon.ability == ABILITY_HARVEST_WINDS && ((movetype == TYPE_FLYING) || (movetype == TYPE_GRASS)))
+    {
+        movepower = movepower * 130 / 100;
+    }
+
     // if dark aura is present but not aura break
     if ((movetype == TYPE_DARK) && (CheckSideAbility(bw, sp, CHECK_ABILITY_ALL_HP, 0, ABILITY_DARK_AURA) != 0)
       && (CheckSideAbility(bw, sp, CHECK_ABILITY_ALL_HP, 0, ABILITY_AURA_BREAK) == 0))
@@ -597,6 +597,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     {
         movepower = movepower * 150 / 100;
     }
+
     // handle steely spirit for the attacker--can stack
     if (movetype == TYPE_STEEL && AttackingMon.ability == ABILITY_STEELY_SPIRIT)
     {
@@ -737,9 +738,9 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     }
 
     // handle iron fist
-    if ((AttackingMon.ability == ABILITY_IRON_FIST) && IsElementInArray(IronFistMovesTable, (u16 *)&moveno, NELEMS(IronFistMovesTable), sizeof(IronFistMovesTable[0])))
+    if ((AttackingMon.ability == ABILITY_IRON_FIST) && IsElementInArray(PunchingMovesTable, (u16 *)&moveno, NELEMS(PunchingMovesTable), sizeof(PunchingMovesTable[0])))
     {
-        movepower = movepower * 12 / 10;
+        movepower = movepower * 13 / 10;
     }
 
     // handle strong jaw
@@ -757,8 +758,15 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     // handle sharpness
     if ((AttackingMon.ability == ABILITY_SHARPNESS) && IsElementInArray(SharpnessMovesTable, (u16 *)&moveno, NELEMS(SharpnessMovesTable), sizeof(SharpnessMovesTable[0])))
     {
-        movepower = movepower * 15 / 10;
+        movepower = movepower * 13 / 10;
     }
+
+    // handle lethal legs
+    if ((AttackingMon.ability == ABILITY_LETHAL_LEGS) && IsElementInArray(KickMovesTable, (u16 *)&moveno, NELEMS(KickMovesTable), sizeof(KickMovesTable[0])))
+    {
+        movepower = movepower * 13 / 10;
+    }
+
 
     // handle water bubble
     if ((AttackingMon.ability == ABILITY_WATER_BUBBLE) && (movetype == TYPE_WATER))
@@ -783,7 +791,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
       && (DefendingMon.ability != ABILITY_BEADS_OF_RUIN))
         sp_defense = sp_defense * 75 / 100;
 
-    // Handle field effects interacting with their moves
+    // handle field effects interacting with their moves
     if (sp->terrainOverlay.numberOfTurnsLeft > 0) {
         switch (sp->terrainOverlay.type)
         {
@@ -805,6 +813,12 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
         default:
             break;
         }
+    }
+
+    // handle grav apple
+    if ((sp->field_condition & FIELD_STATUS_GRAVITY) && (moveno == MOVE_GRAV_APPLE))
+    {
+        movepower = movepower * 15 / 10;
     }
 
     // handle weather boosts
@@ -843,8 +857,8 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     getEquivalentAttackAndDefense(sp, attack, defense, sp_attack, sp_defense, atkstate, defstate, spatkstate, spdefstate, &movesplit, attacker, defender, critical, moveno, &equivalentAttack, &equivalentDefense);
 
     //// halve the defense if using selfdestruct/explosion
-    //if (sp->moveTbl[moveno].effect == MOVE_EFFECT_HALVE_DEFENSE)
-    //    defense = defense / 2;
+    if (sp->moveTbl[moveno].effect == MOVE_EFFECT_HALVE_DEFENSE)
+        defense = defense / 2;
 
     damage = equivalentAttack * movepower;
     damage *= (level * 2 / 5 + 2);
@@ -852,17 +866,17 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     damage = damage / equivalentDefense;
     damage /= 50;
 
-    // Handle Parental Bond
-    if (sp->battlemon[attacker].parental_bond_flag == 2) {
+    // handle parental bond
+    if (sp->oneTurnFlag[attacker].parental_bond_flag == 2) {
         damage /= 4;
     }
-    switch (sp->battlemon[attacker].parental_bond_flag) {
+    switch (sp->oneTurnFlag[attacker].parental_bond_flag) {
         case 1:
-            sp->battlemon[attacker].parental_bond_flag++;
-            sp->battlemon[attacker].parental_bond_is_active = TRUE; // after first hit, set this flag just in case the ability is nullified after the first one
+            sp->oneTurnFlag[attacker].parental_bond_flag++;
+            sp->oneTurnFlag[attacker].parental_bond_is_active = TRUE; // after first hit, set this flag just in case the ability is nullified after the first one
             break;
         default:
-            sp->battlemon[attacker].parental_bond_flag = 0;
+            sp->oneTurnFlag[attacker].parental_bond_flag = 0;
             break;
     }
 
@@ -1008,7 +1022,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
         damage /= 2;
     }
       
-    // Handle field effects
+    // handle field effects
     if (sp->terrainOverlay.numberOfTurnsLeft > 0) {
         switch (sp->terrainOverlay.type)
         {
