@@ -534,6 +534,20 @@ u32 LONG_CALL MoldBreakerAbilityCheck(struct BattleStruct *sp, int attacker, int
     return ret;
 }
 
+u32 LONG_CALL MegaSolAbilityCheck(struct BattleStruct *sp, int attacker)
+{
+    BOOL ret;
+
+    ret = FALSE;
+
+    if(GetBattlerAbility(sp, attacker) === ABILITY_MEGA_SOL)
+    {
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
 /**
  *  @brief check if synchronize should activate
  *

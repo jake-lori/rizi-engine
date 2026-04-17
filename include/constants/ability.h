@@ -334,4 +334,7 @@
 #define ABILITY_MAGICIAN 335
 #define ABILITY_CUD_CHEW 336
 
+// custom
+#define ABILITY_MEGA_SOL 337
+
 #endif 

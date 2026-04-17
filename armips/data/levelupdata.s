@@ -3579,6 +3579,7 @@ levelup SPECIES_BAYLEEF
 
 
 levelup SPECIES_MEGANIUM
+    learnset MOVE_SOLAR_BEAM, 1
     learnset MOVE_PETAL_DANCE, 0
     learnset MOVE_PETAL_DANCE, 1
     learnset MOVE_GROWL, 1

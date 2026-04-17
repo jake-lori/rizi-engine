@@ -3806,7 +3806,7 @@ mondata SPECIES_CHIKORITA, "Chikorita"
     basefriendship 70
     growthrate GROWTH_MEDIUM_SLOW
     egggroups EGG_GROUP_MONSTER, EGG_GROUP_GRASS
-    abilities ABILITY_OVERGROW, ABILITY_FILTER
+    abilities ABILITY_MEGA_MOL, ABILITY_FILTER
     runchance 0
     colorflip BODY_COLOR_GREEN, 0
     mondexentry SPECIES_CHIKORITA, "A sweet aroma gently wafts from\nthe leaf on its head. It is docile\nand loves to soak up sunrays."

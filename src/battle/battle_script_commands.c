@@ -1757,7 +1757,6 @@ BOOL CheckMoveIsChargeMove(struct BattleStruct *sp, int moveNo) {
     case MOVE_EFFECT_CHARGE_TURN_HIGH_CRIT:
     case MOVE_EFFECT_CHARGE_TURN_HIGH_CRIT_FLINCH:
     case MOVE_EFFECT_CHARGE_TURN_DEF_UP:
-    case MOVE_EFFECT_CHARGE_TURN_SUN_SKIPS:
     case MOVE_EFFECT_FLY:
     case MOVE_EFFECT_DIVE:
     case MOVE_EFFECT_DIG:
@@ -1766,6 +1765,10 @@ BOOL CheckMoveIsChargeMove(struct BattleStruct *sp, int moveNo) {
     case MOVE_EFFECT_CHARGE_TURN_ATK_SP_ATK_SPEED_UP_2:
     case MOVE_EFFECT_CHARGE_TURN_SP_ATK_UP:
     case MOVE_EFFECT_CHARGE_TURN_SP_ATK_UP_RAIN_SKIPS:
+        return TRUE;
+    case MOVE_EFFECT_CHARGE_TURN_SUN_SKIPS:
+        if (MegaSolAbilityCheck(sp, sp->attack_client) == TRUE)
+            return FALSE;
         return TRUE;
     }
     return FALSE;

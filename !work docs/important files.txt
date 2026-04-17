@@ -1,0 +1,20 @@
+Pokemon Data
+C:\Users\User\Documents\rizi-engine\armips\data\mondata.s
+Abilities
+C:\Users\User\Documents\rizi-engine\src\battle\ability.c
+Headbutt
+C:\Users\User\Documents\rizi-engine\armips\data\headbutt.s
+Moves
+C:\Users\User\Documents\rizi-engine\armips\data\moves.s
+Trainers
+C:\Users\User\Documents\rizi-engine\armips\data\trainers\trainers.s
+TM Learnset
+C:\Users\User\Documents\rizi-engine\armips\data\tmlearnset.txt
+Evolutions
+C:\Users\User\Documents\rizi-engine\armips\data\evodata.s
+Encounters
+C:\Users\User\Documents\rizi-engine\armips\data\encounters.s
+Level Up Moves
+C:\Users\User\Documents\rizi-engine\armips\data\levelupdata.s
+Move Tutors
+C:\Users\User\Documents\rizi-engine\armips\data\tutordata.txt
