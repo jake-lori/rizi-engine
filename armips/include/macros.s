@@ -1,36 +1,9 @@
 .loadtable "armips/include/utf-8.txt"
 
-// level up learnset macros
-
-.macro levelup,species
-
-	.if species < 10
-		.create "build/a033/learnset_000" + tostring(species),0
-	.elseif species < 100
-		.create "build/a033/learnset_00" + tostring(species),0
-	.elseif species < 1000
-		.create "build/a033/learnset_0" + tostring(species),0
-	.else
-		.create "build/a033/learnset_" + tostring(species),0
-	.endif
-
-.endmacro
-
-.macro learnset,move,level
-    .word (level << 16 | move)
-.endmacro
-
-.macro terminatelearnset
-    .word 0xFFFF
-
-	.close
-.endmacro
-
-
 // mon data macros
 
 .macro mondata,species,name
-    monname species, name
+	monname species, name
 	.if species < 10
 		.create "build/a002/mondata_000" + tostring(species),0
 	.elseif species < 100
@@ -91,38 +64,25 @@
 .endmacro
 
 .macro abilities,abi1,abi2
-.if abi1 > 255 && abi2 <= 255
-	.byte abi2
-.elseif abi1 > 255
-	.byte ABILITY_NONE
-.else
-	.byte abi1
-.endif
-
-.if abi2 > 255
-	.byte ABILITY_NONE
-.else
-	.byte abi2
-.endif
+.orga 0x16
+	.halfword abi1
+.orga 0x1A
+	.halfword abi2
 .endmacro
 
 .macro runchance,num
+.orga 0x18
 	.byte num
 .endmacro
 
 .macro colorflip,color,flip
 	.byte (color | flip << 7)
-    .close
-.endmacro
-
-.macro tmdata,num1,num2,num3,num4 // handled by a python script and armips/data/tmlearnset.txt
-	.halfword 0 // padding
-
-	.word num1
-	.word num2
-	.word num3
-	.word num4
-
+	// get rid of zeroing out ability 2
+.orga 0x1C
+	.word 0
+	.word 0
+	.word 0
+	.word 0
 	.close
 .endmacro
 
@@ -144,6 +104,9 @@
 .endmacro
 
 .macro evolution,method,parameter,species
+	.if (species > NUM_OF_MONS)
+		.error "Invalid species supplied to evolution macro.  If trying to specify an evolution into a form (i.e. SPECIES_ZIGZAGOON_GALARIAN), use the evolutionwithform macro."
+	.endif
 	.halfword method
 	.halfword parameter
 	.halfword species
@@ -151,6 +114,9 @@
 
 // fucking 5-bit forms
 .macro evolutionwithform,method,parameter,species,form
+	.if (species > NUM_OF_MONS)
+		.error "Invalid species supplied to evolutionwithform macro.  If trying to specify an evolution into a form, split up the base species and the form (i.e. \"SPECIES_ZIGZAGOON_GALARIAN\" becomes \"SPECIES_ZIGZAGOON, 1\")."
+	.endif
 	.halfword method
 	.halfword parameter
 	.halfword (species | form << 11)
@@ -161,28 +127,6 @@
 
 	.close
 .endmacro
-
-
-// egg move macros
-
-.macro eggmove,move
-	.halfword move
-.endmacro
-
-.macro eggmoveentry,species
-	.if species == 1
-		.create "build/kowaza/kowaza_0",0
-	.endif
-
-	.halfword species+20000
-.endmacro
-
-.macro terminateeggmoves
-	.halfword 0xFFFF
-
-	.close
-.endmacro
-
 
 // baby mon macro
 
@@ -381,7 +325,7 @@
 // trainer data macros
 
 .macro trainerdata,num,name
-    trainername num, name
+	trainername num, name
 	.if num < 10
 		.create "build/a055/5_00" + tostring(num),0
 	.elseif num < 100
@@ -445,10 +389,16 @@
 .endmacro
 
 .macro monwithform,species,formid
+	.if (species > NUM_OF_MONS)
+		.error "Invalid species supplied to monwithform macro.  If trying to specify a form, split up the base species and the form, i.e. \"SPECIES_ZIGZAGOON_GALARIAN\" becomes \"SPECIES_ZIGZAGOON, 1\"."
+	.endif
 	.halfword (species | (formid<<11))
 .endmacro
 
 .macro pokemon,num
+	.if (num > NUM_OF_MONS)
+		.error "Invalid species supplied to pokemon macro.  If trying to specify a mon with a form (i.e. SPECIES_ZIGZAGOON_GALARIAN), use monwithform."
+	.endif
 	monwithform num, 0
 .endmacro
 
@@ -489,7 +439,7 @@
 .endmacro
 
 .macro additionalflags,num
-    .word num
+	.word num
 .endmacro
 
 .macro status,num
@@ -519,8 +469,6 @@
 .macro statspdef,num
 	.halfword num
 .endmacro
-
-// types already exists
 
 .macro ppcounts,num1,num2,num3,num4
 	.byte num1, num2, num3, num4
@@ -587,59 +535,65 @@
 .endmacro
 
 .macro encounterwithform,species,form,minlevel,maxlevel
+	.if (species > NUM_OF_MONS)
+		.error "Invalid species supplied to encounterwithform macro.  If trying to specify a form, split up the base species and the form, i.e. \"SPECIES_ZIGZAGOON_GALARIAN\" becomes \"SPECIES_ZIGZAGOON, 1\"."
+	.endif
 	.byte minlevel, maxlevel
 	.halfword (species | (form << 11))
 .endmacro
 
 .macro encounter,species,minlevel,maxlevel
+	.if (species > NUM_OF_MONS)
+		.error "Invalid species supplied to encounter macro.  If trying to specify a form (i.e. \"SPECIES_ZIGZAGOON_GALARIAN\"), use encounterwithform."
+	.endif
 	encounterwithform species, 0, minlevel, maxlevel
 .endmacro
 
 .macro msgbankappend,file,msg
-    .create file, 0
-    .stringn msg
-    .close
+	.create file, 0
+	.stringn msg
+	.close
 .endmacro
 
 .macro writestring,subfile,id,str
 	.if id < 10
-	    msgbankappend "build/rawtext/" + subfile + "/000" + tostring(id) + ".txt", str
+		msgbankappend "build/rawtext/" + subfile + "/000" + tostring(id) + ".txt", str
 	.elseif id < 100
 		msgbankappend "build/rawtext/" + subfile + "/00" + tostring(id) + ".txt", str
 	.elseif id < 1000
-    	msgbankappend "build/rawtext/" + subfile + "/0" + tostring(id) + ".txt", str
+		msgbankappend "build/rawtext/" + subfile + "/0" + tostring(id) + ".txt", str
 	.else
 		msgbankappend "build/rawtext/" + subfile + "/" + tostring(id) + ".txt", str
 	.endif
 .endmacro
 
 .macro trainername,id,name
-    writestring "729", id, "{TRNAME}"+name
+	writestring "729", id, "{TRNAME}"+name
 .endmacro
 
 .macro monname,id,name
-    writestring "237", id, name
-    writestring "238", id, name
-    writestring "817", id, name
+	writestring "237", id, name
+	writestring "238", id, name
+	writestring "817", id, name
 .endmacro
 
 .macro mondexentry,id,description
-    writestring "803", id, description
+	writestring "803", id, description
 .endmacro
 
 .macro mondexclassification,id,classification
-    writestring "816", id, classification
-    writestring "823", id, classification
+	writestring "816", id, classification
+	writestring "823", id, classification
 .endmacro
 
 .macro mondexheight,id,height
-    writestring "814", id, height
-    writestring "815", id, height
+	writestring "814", id, height
+	writestring "815", id, height
 .endmacro
 
 .macro mondexweight,id,weight
-    writestring "812", id, weight
-    writestring "813", id, weight
+	writestring "812", id, weight
+	writestring "813", id, weight
 .endmacro
 
 
@@ -649,16 +603,16 @@
 // headbutt trees
 
 .macro xycoords, x, y
-    .halfword x, y
+	.halfword x, y
 .endmacro
 
 .macro treecoords, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6
-    xycoords x1, y1
-    xycoords x2, y2
-    xycoords x3, y3
-    xycoords x4, y4
-    xycoords x5, y5
-    xycoords x6, y6
+	xycoords x1, y1
+	xycoords x2, y2
+	xycoords x3, y3
+	xycoords x4, y4
+	xycoords x5, y5
+	xycoords x6, y6
 .endmacro
 
 .macro headbuttheader, num, headbuttTreeQuantity, specialTreeQuantity
@@ -669,15 +623,21 @@
 	.else
 		.create "build/headbutttrees/" + tostring(num),0
 	.endif
-    .halfword headbuttTreeQuantity, specialTreeQuantity
+	.halfword headbuttTreeQuantity, specialTreeQuantity
 .endmacro
 
 .macro headbuttencounter, species, minLevel, maxlevel
+	.if (species > NUM_OF_MONS)
+		.error "Invalid species supplied to headbuttencounter macro.  If trying to specify a form (i.e. \"SPECIES_ZIGZAGOON_GALARIAN\"), use encounterwithform."
+	.endif
 	.halfword species
 	.byte minLevel, maxlevel
 .endmacro
 
 .macro headbuttencounterwithform, species, form, minLevel, maxlevel
+	.if (species > NUM_OF_MONS)
+		.error "Invalid species supplied to headbuttencounterwithform macro.  If trying to specify a form, split up the base species and the form, i.e. \"SPECIES_ZIGZAGOON_GALARIAN\" becomes \"SPECIES_ZIGZAGOON, 1\"."
+	.endif
 	.halfword species | (form << 11)
 	.byte minLevel, maxlevel
 .endmacro

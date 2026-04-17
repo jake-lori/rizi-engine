@@ -2,19 +2,13 @@
 .align 2
 .thumb
 
+.global DetermineRockSmashItem_hook
+DetermineRockSmashItem_hook:
+push {r1-r3}
+mov r1, r4
+bl DetermineRockSmashItem
+pop {r1-r3}
+mov r2, r0 // move result to where it's expected to be
 
-.global AddWildPartyPokemon_hook
-AddWildPartyPokemon_hook:
-ldr r5, =AddWildPartyPokemon_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl AddWildPartyPokemon
-ldr r1, =AddWildPartyPokemon_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-AddWildPartyPokemon_return_address:
-.word 0
+ldr r0, =0x02204E66 | 1
+bx r0

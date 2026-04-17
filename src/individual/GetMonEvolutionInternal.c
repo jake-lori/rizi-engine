@@ -275,7 +275,7 @@ u16 GetMonEvolutionInternal(struct Party *party, struct PartyPokemon *pokemon, u
 
                     for (k = 0; k < 4; k++)
                     {
-                        if (GetMoveData(GetMonData(pokemon, MON_DATA_MOVE1+k, NULL), MOVE_DATA_TYPE) == evoTable[i].param)
+                        if (GetMoveData(GetMonData(pokemon, MON_DATA_MOVE1+k, NULL), MOVE_DATA_TYPE) == evoTable[i].param && friendship >= FRIENDSHIP_EVOLUTION_THRESHOLD)
                         {
                             target = evoTable[i].target & 0x7FF;
                             *method_ret = EVO_HAS_MOVE_TYPE;
@@ -411,7 +411,15 @@ u16 GetMonEvolutionInternal(struct Party *party, struct PartyPokemon *pokemon, u
                 break;
             }
         }
+<<<<<<< HEAD
         if (level == 100 && usedItem == ITEM_RARE_CANDY)
+=======
+        #if defined(IMPLEMENT_LEVEL_CAP) && defined(ALLOW_LEVEL_CAP_EVOLVE)
+        if ((level == 100 || level == GetLevelCap()) && usedItem == ITEM_RARE_CANDY)
+        #else
+        if (level == 100 && usedItem == ITEM_RARE_CANDY)
+        #endif
+>>>>>>> upstream/main
         {
             species = GetMonEvolutionInternal(party, pokemon, EVOCTX_LEVELUP, usedItem, NULL);
             if (species) {

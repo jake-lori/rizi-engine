@@ -16,6 +16,15 @@
 #include "../../include/constants/species.h"
 #include "../../include/constants/weather_numbers.h"
 
+#ifdef DEBUG_BATTLE_SCENARIOS
+#include "../../include/test_battle.h"
+#endif // DEBUG_BATTLE_SCENARIOS
+
+struct BattleSetup LONG_CALL *BattleSetup_New_Tutorial(u32 heapID, FieldSystem *fieldSystem);
+int LONG_CALL BattleSetup_GetWildTransitionEffect(struct BattleSetup *setup);
+int LONG_CALL BattleSetup_GetWildBattleMusic(struct BattleSetup *setup);
+void LONG_CALL *Encounter_New(struct BattleSetup *setup, s32 effect, s32 bgm, u32 *winFlag);
+
 /**
  *  @brief swap two integer values with each other given pointers
  *
@@ -81,15 +90,14 @@ void MakeTrainerPokemonParty(struct BATTLE_PARAM *bp, int num, int heapID)
 
     // goal:  get rid of massive switch statement with each individual byte.  make the trainer type a bitfield
     u32 id;
-    u16 species = 0, item = 0, ability = 0, level = 0, ball = 0, hp = 0, atk = 0, def = 0, speed = 0, spatk = 0, spdef = 0;
+    u16 species = 0, adjustedSpecies = 0, item = 0, ability = 0, level = 0, ball = 0, hp = 0, atk = 0, def = 0, speed = 0, spatk = 0, spdef = 0, ab1 = 0, ab2 = 0;
     u16 offset = 0;
     u16 moves[4];
     u8 ivnums[6];
     u8 evnums[6];
-    u8 types[2];
     u8 ppcounts[4];
     u16 *nickname = sys_AllocMemory(heapID, 11*sizeof(u16));
-    u8 form_no = 0, abilityslot = 0, nature = 0, ballseal = 0, shinylock = 0, status = 0, ab1 = 0, ab2 = 0;
+    u8 form_no = 0, abilityslot = 0, nature = 0, ballseal = 0, shinylock = 0, status = 0;
     u32 additionalflags = 0;
 
     int partyOrder[pokecount];
@@ -269,16 +277,6 @@ void MakeTrainerPokemonParty(struct BATTLE_PARAM *bp, int num, int heapID)
                 offset += 2;
             }
 
-            // custom types field
-            if(additionalflags & TRAINER_DATA_EXTRA_TYPE_TYPES)
-            {
-                for(j = 0; j < 2; j++)
-                {
-                    types[j] = buf[offset];
-                    offset++;
-                }
-            }
-
             // move PP counts field
             if(additionalflags & TRAINER_DATA_EXTRA_TYPE_PP_COUNTS)
             {
@@ -318,30 +316,30 @@ void MakeTrainerPokemonParty(struct BATTLE_PARAM *bp, int num, int heapID)
         SetMonData(mons[i], MON_DATA_FORM, &form_no);
 
         //set default abilities
-        species = PokeOtherFormMonsNoGet(species, form_no);
-        ab1 = PokePersonalParaGet(species, PERSONAL_ABILITY_1);
-        ab2 = PokePersonalParaGet(species, PERSONAL_ABILITY_2);
+        adjustedSpecies = PokeOtherFormMonsNoGet(species, form_no);
+        ab1 = PokePersonalParaGet(adjustedSpecies, PERSONAL_ABILITY_1);
+        ab2 = PokePersonalParaGet(adjustedSpecies, PERSONAL_ABILITY_2);
         if (ab2 != 0)
         {
             if (abilityslot & 1 || abilityslot == 32) // abilityslot 32 gives second slot in vanilla
             {
-                SetMonData(mons[i], MON_DATA_ABILITY, (u8 *)&ab1);
+                SetMonData(mons[i], MON_DATA_ABILITY, (u16 *)&ab2);
             }
             else{
-                SetMonData(mons[i], MON_DATA_ABILITY, (u8 *)&ab2);
+                SetMonData(mons[i], MON_DATA_ABILITY, (u16 *)&ab1);
             }
         }
         else
         {
-            SetMonData(mons[i], MON_DATA_ABILITY, (u8 *)&ab1);
+            SetMonData(mons[i], MON_DATA_ABILITY, (u16 *)&ab1);
         }
 
         // if abilityslot is 2 force hidden ability with the bit set.  this specifically to cover darmanitan with zen mode switching between forms and such.
         if (abilityslot == 2)
         {
             u16 hiddenability = GetMonHiddenAbility(species, form_no);
-            SET_MON_HIDDEN_ABILITY_BIT(mons[i])
-            SetMonData(mons[i], MON_DATA_ABILITY, (u8 *)&hiddenability);
+            SET_MON_HIDDEN_ABILITY_BIT(mons[i]);
+            SetMonData(mons[i], MON_DATA_ABILITY, (u16 *)&hiddenability);
         }
 
         if (bp->trainer_data[num].data_type & TRAINER_DATA_TYPE_ITEMS)
@@ -352,6 +350,11 @@ void MakeTrainerPokemonParty(struct BATTLE_PARAM *bp, int num, int heapID)
         {
             for (j = 0; j < 4; j++)
             {
+#ifdef BLOCK_LEARNING_UNIMPLEMENTED_MOVES
+                if (IsMoveUnimplemented(moves[j])) {
+                    moves[j] = MOVE_NONE;
+                }
+#endif
                 SetPartyPokemonMoveAtPos(mons[i], moves[j], j);
             }
         }
@@ -395,6 +398,8 @@ void MakeTrainerPokemonParty(struct BATTLE_PARAM *bp, int num, int heapID)
             }
         }
 
+        ChangeToBattleForm(mons[i]);
+
         RecalcPartyPokemonStats(mons[i]); // recalculate stats here
 
         if (bp->trainer_data[num].data_type & TRAINER_DATA_TYPE_ADDITIONAL_FLAGS)
@@ -428,13 +433,6 @@ void MakeTrainerPokemonParty(struct BATTLE_PARAM *bp, int num, int heapID)
             {
                 SetMonData(mons[i],MON_DATA_SPECIAL_DEFENSE, &spdef);
             }
-            if (additionalflags & TRAINER_DATA_EXTRA_TYPE_TYPES)
-            {
-                for(j = 0; j < 2; j++)
-                {
-                    SetMonData(mons[i],MON_DATA_TYPE_1+j, &types[j]);
-                }
-            }
             if (additionalflags & TRAINER_DATA_EXTRA_TYPE_PP_COUNTS)
             {
                 for(j = 0; j < 4; j++)
@@ -463,6 +461,22 @@ void MakeTrainerPokemonParty(struct BATTLE_PARAM *bp, int num, int heapID)
     sys_FreeMemoryEz(nickname);
 
     gf_srand(seed_tmp);
+
+#ifdef DEBUG_BATTLE_SCENARIOS
+    // Override parties with test scenario if enabled
+    TestBattle_OverrideParties(bp);
+#endif
+
+    // Change battle forms for player party
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 6; j++) {
+            struct PartyPokemon *mon = Party_GetMonByIndex(bp->poke_party[i], j);
+            if (mon != NULL) {
+                ChangeToBattleForm(mon);
+                RecalcPartyPokemonStats(mon);
+            }
+        }
+    }
 }
 
 extern u32 space_for_setmondata;
@@ -523,5 +537,39 @@ BOOL LONG_CALL AddWildPartyPokemon(int inTarget, EncounterInfo *encounterInfo, s
         ResetPartyPokemonAbility(encounterPartyPokemon);
         InitBoxMonMoveset(&encounterPartyPokemon->box);
     }
+
+    ChangeToBattleForm(encounterPartyPokemon);
+
     return PokeParty_Add(encounterBattleParam->poke_party[inTarget], encounterPartyPokemon);
+}
+
+void LONG_CALL SetupAndStartTutorialBattle(TaskManager *taskManager) {
+    struct BattleSetup *setup = BattleSetup_New_Tutorial(11, taskManager->fieldSystem);
+
+    struct PartyPokemon *marill = Party_GetMonByIndex(setup->party[BATTLER_PLAYER], 0);
+
+    // move slot 1 is tackle
+    u16 data = MOVE_TACKLE;
+    SetMonData(marill, MON_DATA_MOVE1, &data);
+    data = GetMoveMaxPP(data, 0);
+    SetMonData(marill, MON_DATA_MOVE1PP, &data);
+    data = 0;
+    SetMonData(marill, MON_DATA_MOVE1PPUP, &data);
+
+    // move slot 2 is tail whip
+    data = MOVE_TAIL_WHIP;
+    SetMonData(marill, MON_DATA_MOVE2, &data);
+    data = GetMoveMaxPP(data, 0);
+    SetMonData(marill, MON_DATA_MOVE2PP, &data);
+    data = 0;
+    SetMonData(marill, MON_DATA_MOVE2PPUP, &data);
+
+    // move slot 3 and 4 none
+    data = MOVE_NONE;
+    SetMonData(marill, MON_DATA_MOVE3, &data);
+    SetMonData(marill, MON_DATA_MOVE4, &data);
+
+    void *encounter = Encounter_New(setup, BattleSetup_GetWildTransitionEffect(setup), BattleSetup_GetWildBattleMusic(setup), NULL);
+
+    TaskManager_Call(taskManager, Task_TutorialBattle, encounter);
 }

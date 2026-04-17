@@ -11,266 +11,531 @@
 #include "../../include/constants/move_effects.h"
 #include "../../include/constants/moves.h"
 #include "../../include/constants/species.h"
+#include "../../include/q412.h"
 
 
-struct PACKED sDamageCalc
-{
-    u16 species;
-    s16 hp;
-    u16 maxhp;
-    u16 dummy;
-    int item_held_effect;
-    int item_power;
+// int UNUSED CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond UNUSED,u32 field_cond, u16 pow UNUSED, u8 type UNUSED, u8 attacker, u8 defender, u8 critical) {
+int UNUSED CalcBaseDamageInternal(struct BattleSystem *bw, struct BattleStruct *sp, struct DamageCalcStruct *damageCalc) {
+    u32 i = 0;
+    u32 attack;
+    u32 defense;
+    u32 sp_attack;
+    u32 sp_defense;
+    u32 p;
+    u32 basePowerModifier = UQ412__1_0;
+    BOOL fairyAuraApplied = FALSE;
+    BOOL darkAuraApplied = FALSE;
+    BOOL flowerGiftAppliedForAttackModifier = FALSE;
+    BOOL flowerGiftAppliedForDefenseModifier = FALSE;
+    u32 attackModifier = UQ412__1_0;
+    u32 defenseModifier = UQ412__1_0;
+    u32 calculatedAttack = 0, calculatedDefense = 0;
+    u32 baseDamage = 0;
+    u32 battlerAbilities[4];
 
-    u32 condition;
+    u32 maxBattlers = damageCalc->maxBattlers;
+    int attackerPartySize = damageCalc->attackerPartySize;
+    u8 attacker = damageCalc->attacker;
+    u8 defender = damageCalc->defender;
+    u8 critical = damageCalc->critical;
+    int moveno = damageCalc->moveno;
+    u8 movetype = damageCalc->movetype;
+    u8 movesplit = damageCalc->movesplit;
+    u16 movepower = damageCalc->movepower;
+    int damage_power = damageCalc->damage_power;
+    int damage_value = damageCalc->damage_value;
+    //u8 magnitude = damageCalc->magnitude;
+    BOOL gemBoostingMove = damageCalc->gemBoostingMove;
+    BOOL noCloudNineAndAirLock = damageCalc->noCloudNineAndAirLock;
+    BOOL fieldHasFairyAura = damageCalc->fieldHasFairyAura;
+    BOOL fieldHasDarkAura = damageCalc->fieldHasDarkAura;
+    BOOL fieldHasAuraBreak = damageCalc->fieldHasAuraBreak;
+    u32 field_cond = damageCalc->field_cond;
+    u8 terrainOverlayType = damageCalc->terrainOverlayType;
+    u8 terrainOverlayNumberOfTurnsLeft = damageCalc->terrainOverlayNumberOfTurnsLeft;
+    u8 playerSideHasFaintedTeammateLastTurn = damageCalc->playerSideHasFaintedTeammateLastTurn;
+    u8 enemySideHasFaintedTeammateLastTurn = damageCalc->enemySideHasFaintedTeammateLastTurn;
+    u8 originalMoveType = damageCalc->originalMoveType;
+    u16 moveEffect = damageCalc->moveEffect;
+    u8 moveFlag = damageCalc->moveFlag;
 
-    u16 ability;
-    u8 sex;
-    u8 type1;
-    u8 type2;
-};
+    for (u32 i = 0; i < damageCalc->maxBattlers; i++) {
+        battlerAbilities[i] = damageCalc->clients[i].ability;
+    }
 
+    struct sDamageCalc AttackingMon = damageCalc->clients[attacker];
+    struct sDamageCalc AttackingMonAlly = damageCalc->clients[BATTLER_ALLY(attacker)];
+    struct sDamageCalc DefendingMon = damageCalc->clients[defender];
+    // struct sDamageCalc DefendingMonAlly;
 
-
-static const u8 HeldItemPowerUpTable[][2]={
-    {HOLD_EFFECT_STRENGTHEN_BUG, TYPE_BUG},
-    {HOLD_EFFECT_STRENGTHEN_STEEL, TYPE_STEEL},
-    {HOLD_EFFECT_STRENGTHEN_GROUND, TYPE_GROUND},
-    {HOLD_EFFECT_STRENGTHEN_ROCK, TYPE_ROCK},
-    {HOLD_EFFECT_STRENGTHEN_GRASS, TYPE_GRASS},
-    {HOLD_EFFECT_STRENGTHEN_DARK, TYPE_DARK},
-    {HOLD_EFFECT_STRENGTHEN_FIGHT, TYPE_FIGHTING},
-    {HOLD_EFFECT_STRENGTHEN_ELECTRIC, TYPE_ELECTRIC},
-    {HOLD_EFFECT_STRENGTHEN_WATER, TYPE_WATER},
-    {HOLD_EFFECT_STRENGTHEN_FLYING, TYPE_FLYING},
-    {HOLD_EFFECT_STRENGTHEN_POISON, TYPE_POISON},
-    {HOLD_EFFECT_STRENGTHEN_ICE, TYPE_ICE},
-    {HOLD_EFFECT_STRENGTHEN_GHOST, TYPE_GHOST},
-    {HOLD_EFFECT_STRENGTHEN_PSYCHIC, TYPE_PSYCHIC},
-    {HOLD_EFFECT_STRENGTHEN_FIRE, TYPE_FIRE},
-    {HOLD_EFFECT_STRENGTHEN_DRAGON, TYPE_DRAGON},
-    {HOLD_EFFECT_STRENGTHEN_NORMAL, TYPE_NORMAL},
-    {HOLD_EFFECT_ARCEUS_FIRE, TYPE_FIRE},
-    {HOLD_EFFECT_ARCEUS_WATER, TYPE_WATER},
-    {HOLD_EFFECT_ARCEUS_ELECTRIC, TYPE_ELECTRIC},
-    {HOLD_EFFECT_ARCEUS_GRASS, TYPE_GRASS},
-    {HOLD_EFFECT_ARCEUS_ICE, TYPE_ICE},
-    {HOLD_EFFECT_ARCEUS_FIGHTING, TYPE_FIGHTING},
-    {HOLD_EFFECT_ARCEUS_POISON, TYPE_POISON},
-    {HOLD_EFFECT_ARCEUS_GROUND, TYPE_GROUND},
-    {HOLD_EFFECT_ARCEUS_FLYING, TYPE_FLYING},
-    {HOLD_EFFECT_ARCEUS_PSYCHIC, TYPE_PSYCHIC},
-    {HOLD_EFFECT_ARCEUS_BUG, TYPE_BUG},
-    {HOLD_EFFECT_ARCEUS_ROCK, TYPE_ROCK},
-    {HOLD_EFFECT_ARCEUS_GHOST, TYPE_GHOST},
-    {HOLD_EFFECT_ARCEUS_DRAGON, TYPE_DRAGON},
-    {HOLD_EFFECT_ARCEUS_DARK, TYPE_DARK},
-    {HOLD_EFFECT_ARCEUS_STEEL, TYPE_STEEL},
-    {HOLD_EFFECT_ARCEUS_NORMAL, TYPE_NORMAL},
-#if FAIRY_TYPE_IMPLEMENTED == 1
-    {HOLD_EFFECT_STRENGTHEN_FAIRY, TYPE_FAIRY},
-    {HOLD_EFFECT_ARCEUS_FAIRY, TYPE_FAIRY},
+    if (I_AM_TERAPAGOS_AND_I_NEED_TO_KO_CARMINES_SINISTCHA(bw, sp, attacker)) {
+#ifdef DEBUG_DAMAGE_CALC
+    debug_printf("\n=================\n");
+    debug_printf("[CalcBaseDamage] Step 0\n");
+    debug_printf("[CalcBaseDamage] Cheating Terapagos\n");
 #endif
-};
+        return 9999;
+    }
 
-// this has been moved to src/battle/other_battle_calculators.c so it can be used in 
-extern const u16 PunchingMovesTable[24];
-
-static const u16 StrongJawMovesTable[] = {
-    MOVE_BITE,
-    MOVE_CRUNCH,
-    MOVE_FIRE_FANG,
-    MOVE_FISHIOUS_REND,
-    MOVE_HYPER_FANG,
-    MOVE_ICE_FANG,
-    MOVE_JAW_LOCK,
-    MOVE_POISON_FANG,
-    MOVE_PSYCHIC_FANGS,
-    MOVE_THUNDER_FANG,
-};
-
-static const u16 MegaLauncherMovesTable[] = {
-    MOVE_AURA_SPHERE,
-    MOVE_DARK_PULSE,
-    MOVE_DRAGON_PULSE,
-    MOVE_HEAL_PULSE,
-    MOVE_ORIGIN_PULSE,
-    MOVE_TERRAIN_PULSE,
-    MOVE_WATER_PULSE,
-};
-
-static const u16 SharpnessMovesTable[] = {
-    MOVE_AERIAL_ACE,
-    MOVE_AIR_CUTTER,
-    MOVE_AIR_SLASH,
-    MOVE_AQUA_CUTTER,
-    MOVE_BEHEMOTH_BLADE,
-    MOVE_BITTER_BLADE,
-    MOVE_CEASELESS_EDGE,
-    MOVE_CROSS_POISON,
-    MOVE_CUT,
-    MOVE_FURY_CUTTER,
-    MOVE_KOWTOW_CLEAVE,
-    MOVE_LEAF_BLADE,
-    MOVE_NIGHT_SLASH,
-    MOVE_POPULATION_BOMB,
-    MOVE_PSYBLADE,
-    MOVE_PSYCHO_CUT,
-    MOVE_RAZOR_SHELL,
-    MOVE_RAZOR_LEAF,
-    MOVE_SACRED_SWORD,
-    MOVE_SECRET_SWORD,
-    MOVE_SLASH,
-    MOVE_SOLAR_BLADE,
-    MOVE_STONE_AXE,
-    MOVE_X_SCISSOR,
-};
-
-static const u16 KickMovesTable[] = {
-    MOVE_BLAZE_KICK,
-    MOVE_HIGH_JUMP_KICK,
-    MOVE_JUMP_KICK,
-    MOVE_LOW_KICK,
-    MOVE_MEGA_KICK,
-    MOVE_DOUBLE_KICK,
-    MOVE_TRIPLE_KICK,
-    MOVE_AXE_KICK,
-    MOVE_LOW_SWEEP,
-};
+    // https://web.archive.org/web/20241226231016/https://www.trainertower.com/dawoblefets-damage-dissertation/
 
 
-int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
-                   u32 field_cond, u16 pow, u8 type UNUSED, u8 attacker, u8 defender, u8 critical)
-{
-    u32 i;
-    s32 damage = 0;
-    u8 movetype;
-    u8 movesplit;
-    u16 attack;
-    u16 defense;
-    u16 sp_attack;
-    u16 sp_defense;
-    s8 atkstate;
-    s8 defstate;
-    s8 spatkstate;
-    s8 spdefstate;
-    u8 level;
-    u16 movepower;
-    u16 item;
-    u32 battle_type;
+    //=====Step 1. Custom BP=====
 
-
-    struct sDamageCalc AttackingMon;
-    struct sDamageCalc DefendingMon;
+    // TODO: Check if there are any moves not ported yet
+    // if (pow == 0) {
+    //     debug_printf("First case\n");
+    //     movepower = sp->moveTbl[moveno].power;
+    // } else {
+    //     debug_printf("Second case\n");
+    //     movepower = pow;
+    // }
 
     switch (moveno) {
-        // handle body press - attack is derived from defense
-        case MOVE_BODY_PRESS:
-            attack = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_DEF, NULL);
-            atkstate = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_STATE_DEF, NULL) - 6;
+    // Speed-based
+    case MOVE_GYRO_BALL:
+        if (AttackingMon.speed == 0) {
+            movepower = 1;
+        } else {
+            movepower = (25 * DefendingMon.speed) / AttackingMon.speed;
+            movepower = movepower > 150 ? 150 : movepower;
+        }
+        break;
+    case MOVE_ELECTRO_BALL:
+        if (DefendingMon.speed == 0) {
+            movepower = 40;
+        } else {
+            switch (AttackingMon.speed / DefendingMon.speed) {
+                case 0:
+                    movepower = 40;
+                    break;
+                case 1:
+                    movepower = 60;
+                    break;
+                case 2:
+                    movepower = 80;
+                    break;
+                case 3:
+                    movepower = 120;
+                    break;
+                // 4 or higher
+                default:
+                    movepower = 150;
+                    break;
+            }
+        }
+        break;
+    // Weight-based
+    case MOVE_LOW_KICK:
+    case MOVE_GRASS_KNOT:
+        while (sLowKickWeightToPower[i][0] != 0xFFFF) {
+            if (sLowKickWeightToPower[i][0] >= DefendingMon.weight) {
+                break;
+            }
+            i++;
+        }
+
+        if (sLowKickWeightToPower[i][0] != 0xFFFF) {
+            movepower = sLowKickWeightToPower[i][1];
+        } else {
+            movepower = 120;
+        }
+        break;
+    case MOVE_HEAVY_SLAM:
+    case MOVE_HEAT_CRASH:
+        switch (AttackingMon.weight / DefendingMon.weight) {
+            case 2:
+                movepower = 60;
+                break;
+            case 3:
+                movepower = 80;
+                break;
+            case 4:
+                movepower = 100;
+                break;
+            case 5:
+                movepower = 120;
+                break;
+            // less than 2
+            default:
+                movepower = 40;
+                break;
+        }
+        break;
+    // HP-based
+    case MOVE_ERUPTION:
+    case MOVE_WATER_SPOUT:
+        movepower = (150 * AttackingMon.hp) / AttackingMon.maxhp;
+        break;
+    case MOVE_REVERSAL:
+    case MOVE_FLAIL:
+        p = (48 * AttackingMon.hp) / AttackingMon.maxhp;
+        if (p >= 32) {
+            movepower = 20;
             break;
+        }
+        if (p >= 17) {
+            movepower = 40;
+            break;
+        }
+        if (p >= 10) {
+            movepower = 80;
+            break;
+        }
+        if (p >= 5) {
+            movepower = 100;
+            break;
+        }
+        if (p >= 2) {
+            movepower = 150;
+            break;
+        }
+        if (p <= 1) {
+            movepower = 200;
+            break;
+        }
+        break;
+    case MOVE_CRUSH_GRIP:
+    case MOVE_WRING_OUT:
+        // TODO: Check correctness
+        movepower = QMul_RoundDown(120 * 100, (DefendingMon.hp * 4096) / DefendingMon.maxhp) / 100;
+        break;
+    // Happiness-based
+    case MOVE_RETURN:
+        movepower = AttackingMon.happiness * 10 / 25;
+        break;
+    case MOVE_FRUSTRATION:
+        movepower = (255 - AttackingMon.happiness) * 10 / 25;
+        break;
+    // Counter-based
+    // Fury Cutter's damage cap is handled in src/battle/battle_script_commands.c. 
+    // By default, the modern cap is 3 (meaning furyCutterCount will be between 0-2).
+    case MOVE_FURY_CUTTER:
+        for (u32 n = 1; n < AttackingMon.furyCutterCount; n++) {
+            if (movepower >= 160) {
+                break;
+            }
+            movepower *= 2;
+        }
+        break;
+    case MOVE_ROLLOUT:
+    case MOVE_ICE_BALL:
+        // https://github.com/pret/pokeheartgold/blob/29282f7bb45946dee63475022a8d506092bc3748/src/battle/battle_command.c#L3391
+        for (u32 n = 1; n < 5 - AttackingMon.rolloutCount; n++) {
+            movepower *= 2;
+        }
+        break;
+    case MOVE_SPIT_UP:
+        if (AttackingMon.parentalBondFlag == 2 && AttackingMon.ability == ABILITY_PARENTAL_BOND) {
+            movepower = damage_power;
+        } else {
+            movepower = 100 * AttackingMon.stockpileCount;
+        }
+        break;
+    // Stat boosts-based
+    case MOVE_PUNISHMENT:
+        movepower = 60 + 20 * DefendingMon.positiveStatBoosts;
+        movepower = movepower > 200 ? 200 : movepower;
+        break;
+    case MOVE_POWER_TRIP:
+    case MOVE_STORED_POWER:
+        movepower = 20 + 20 * AttackingMon.positiveStatBoosts;
+        break;
+    // Dichotomous Base Power
+    case MOVE_ACROBATICS:
+        if (AttackingMon.item == ITEM_NONE) {
+            movepower *= 2;
+        }
+        break;
+    case MOVE_ASSURANCE:
+    case MOVE_REVENGE:
+        if (DefendingMon.assuranceDamage) {
+            movepower *= 2;
+        }
+        break;
+    case MOVE_WATER_PLEDGE:
+    case MOVE_FIRE_PLEDGE:
+    case MOVE_GRASS_PLEDGE:
+        // TODO
+        break;
+    case MOVE_GUST:
+    case MOVE_TWISTER:
+        // TODO: handle charging turn of Sky Drop
+        if (DefendingMon.effectOfMoves & MOVE_EFFECT_FLAG_FLYING_IN_AIR) {
+            movepower *= 2;
+        }
+        break;
+    case MOVE_HEX:
+        if (DefendingMon.condition & STATUS_ALL) {
+            movepower *= 2;
+        }
+        break;
+    case MOVE_PAYBACK:
+        // TODO: Check correctness
+        if (IsMovingAfterClient(sp, defender) == TRUE) { //as of Gen5 no longer doubles on switching
+            movepower *= 2;
+        }
+        break;
+    case MOVE_PURSUIT:
+        // TODO: Handle this massive headache later
+        movepower = movepower * damage_value / 10;
+        break;
+    case MOVE_ROUND:
+        // TODO: Implement Round
+        break;
+    case MOVE_SMELLING_SALTS:
+        if (CheckSubstitute(sp, defender) == FALSE && DefendingMon.condition & STATUS_PARALYSIS) {
+            movepower *= 2;
+        }
+        break;
+    case MOVE_TEMPER_FLARE:
+    case MOVE_STOMPING_TANTRUM:
+        if (AttackingMon.hasMoveFailureLastTurn) {
+            movepower *= 2;
+        }
+        break;
+    case MOVE_WAKE_UP_SLAP:
+        if (CheckSubstitute(sp, defender) == FALSE  && 
+            (DefendingMon.condition & STATUS_SLEEP || MoldBreakerAbilityCheck(sp, defender, defender, ABILITY_COMATOSE))) {
+            movepower *= 2;
+        }
+        break;
+    case MOVE_WEATHER_BALL:
+        if (noCloudNineAndAirLock) {
+            if ((field_cond & FIELD_CONDITION_WEATHER)
+            && !(field_cond & (WEATHER_STRONG_WINDS | WEATHER_SNOW_ANY))) {
+                movepower *= 2;
+            }
+        }
+        break;
+    case MOVE_WATER_SHURIKEN:
+        if (AttackingMon.species == SPECIES_GRENINJA
+            && AttackingMon.form == 1) {
+            movepower = 20;
+        }
+        break;
+    case MOVE_BOLT_BEAK:
+    case MOVE_FISHIOUS_REND:
+        // https://www.smogon.com/forums/threads/sword-shield-battle-mechanics-research.3655528/post-8433978
+        if (IsMovingAfterClient(sp, defender) == FALSE || sp->playerActions[sp->defence_client][3] == CONTROLLER_COMMAND_40) {
+            movepower *= 2;
+        }
+        break;
+    case MOVE_RISING_VOLTAGE:
+        if ((terrainOverlayNumberOfTurnsLeft > 0) && (terrainOverlayType == ELECTRIC_TERRAIN)) {
+            movepower = 140;
+        }
+        break;
+    // Item-based
+    case MOVE_FLING:
+        movepower = GetHeldItemFlingPower(sp, attacker);
+        break;
+    case MOVE_NATURAL_GIFT:
+        movepower = GetNaturalGiftPower(sp, attacker);
+        break;
+    // Other
+    case MOVE_BEAT_UP:
+        // when AI calls this function, it probably does not mess up the state, but it might not see the damage correctly
+        for (int i = sp->beat_up_count; i < attackerPartySize; i++) {
+            struct PartyPokemon *mon = damageCalc->attackerParty[i];
+            if ((IsMonValidAndHealthy(mon))) {
+
+                sp->beat_up_count = i + 1;
+                sp->multiHitCountTemp++;
+                int species = GetMonData(mon, MON_DATA_SPECIES, 0);
+                int form = GetMonData(mon, MON_DATA_FORM, 0);
+                movepower = 5 + (PokeFormNoPersonalParaGet(species, form, PERSONAL_BASE_ATTACK) / 10);
+                break;
+
+            }
+        }
+
+        break;
+    case MOVE_ECHOED_VOICE:
+        // TODO
+        break;
+    case MOVE_HIDDEN_POWER:
+        movepower = 60;
+        break;
+    case MOVE_MAGNITUDE:
+        movepower = damage_power;
+        break;
+    case MOVE_PRESENT:
+        movepower = damage_power;
+        break;
+    case MOVE_TRIPLE_KICK:
+        movepower = damage_power;
+        break;
+    case MOVE_TRUMP_CARD:
+        movepower = damage_power;
+        break;
+    case MOVE_TERRAIN_PULSE:
+        if (sp->terrainOverlay.numberOfTurnsLeft > 0 
+            && sp->terrainOverlay.type 
+            && IsClientGrounded(sp, attacker))
+        {
+            movepower *= 2;
+        }
+    default:
+        break;
+    }
+
+    // Commenting this should be fine
+    // sp->damage_power = movepower;
+
+    // TODO: Check if there are any moves not ported yet
+    // movepower = movepower * sp->damage_value / 10;
+
+#ifdef DEBUG_DAMAGE_CALC
+    debug_printf("\n=================\n");
+    debug_printf("[CalcBaseDamage] Step 1. Custom BP\n");
+    debug_printf("[CalcBaseDamage] moveno: %d\n", moveno);
+    debug_printf("[CalcBaseDamage] movepower: %d\n", movepower);
+#endif
+
+    //=====End of Step 1=====
+
+    //=====Step 2. Base Power Modifiers=====
+
+    SortRawSpeedNonRNGArray(bw, sp);
+
+    // Z-move effects:
+
+    // Move effects:
+
+    // handle Helping Hand (+5 priority)
+    // TODO: Handle multiple Helping Hand boosts
+    if (AttackingMon.helpingHandFlag) {
+        basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__1_5);
+    }
+
+    switch (moveno) {
+        case MOVE_FACADE:
+            if ((AttackingMon.condition & STATUS_FACADE_BOOST)) {
+                basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__2_0);
+            }
+            break;
+        case MOVE_BRINE:
+            if (DefendingMon.hp <= DefendingMon.maxhp / 2) {
+                basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__2_0);
+            }
+            break;
+        case MOVE_KNOCK_OFF:
+            if (CanKnockOffApply(sp, attacker, defender)) {
+                basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__1_5);
+            }
+            break;
+        case MOVE_VENOSHOCK:
+            if (DefendingMon.condition &STATUS_POISON_ALL) {
+                basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__2_0);
+            }
+            break;
+        case MOVE_RETALIATE:
+            {
+                BOOL teammateFaintedLastTurn = FALSE;
+                switch (attacker)
+                {
+                case BATTLER_PLAYER:
+                    if (playerSideHasFaintedTeammateLastTurn == TRAINER_1 || playerSideHasFaintedTeammateLastTurn == TRAINER_BOTH)
+                        teammateFaintedLastTurn = TRUE;
+                    break;
+                case BATTLER_ENEMY:
+                    if (enemySideHasFaintedTeammateLastTurn == TRAINER_1 || enemySideHasFaintedTeammateLastTurn == TRAINER_BOTH)
+                        teammateFaintedLastTurn = TRUE;
+                    break;
+                case BATTLER_PLAYER2:
+                    if (playerSideHasFaintedTeammateLastTurn == TRAINER_2 || playerSideHasFaintedTeammateLastTurn == TRAINER_BOTH)
+                        teammateFaintedLastTurn = TRUE;
+                    break;
+                case BATTLER_ENEMY2:
+                    if (enemySideHasFaintedTeammateLastTurn == TRAINER_2 || enemySideHasFaintedTeammateLastTurn == TRAINER_BOTH)
+                        teammateFaintedLastTurn = TRUE;
+                    break;
+                }
+
+                if (teammateFaintedLastTurn) {
+                    basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__2_0);
+                }
+            }
+            break;
+        case MOVE_FUSION_FLARE:
+            // TODO
+            break;
+        case MOVE_FUSION_BOLT:
+            // TODO
+            break;
+        case MOVE_GRAV_APPLE:
+            // https://www.smogon.com/forums/threads/sword-shield-battle-mechanics-research.3655528/post-8870357
+            if ((field_cond & FIELD_STATUS_GRAVITY)) {
+                basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__1_5);
+            }
+            break;
+        case MOVE_EXPANDING_FORCE:
+            // https://www.smogon.com/forums/threads/sword-shield-battle-mechanics-research.3655528/post-8520635
+            if ((terrainOverlayNumberOfTurnsLeft > 0) && (terrainOverlayType == PSYCHIC_TERRAIN)) {
+                basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__1_5);
+            }
+            break;
+        case MOVE_MISTY_EXPLOSION:
+            // https://www.smogon.com/forums/threads/sword-shield-battle-mechanics-research.3655528/post-8520635
+            if ((terrainOverlayNumberOfTurnsLeft > 0) && (terrainOverlayType == MISTY_TERRAIN)) {
+                basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__1_5);
+            }
+            break;
+        case MOVE_LASH_OUT:
+            // https://www.smogon.com/forums/threads/sword-shield-battle-mechanics-research.3655528/post-8870357
+            if (sp->moveConditionsFlags[attacker].anyStatLoweredThisTurn) {
+                basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__2_0);
+            }
+            break;
+
 
         default:
-            attack = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_ATK, NULL);
-            atkstate = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_STATE_ATK, NULL) - 6;
             break;
     }
 
-    defense = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_DEF, NULL);
-    sp_attack = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_SPATK, NULL);
-    sp_defense = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_SPDEF, NULL);
+    // Effects relative to a particular slot of the field (Wish, Lunar Dance, Future Sight, etc.):
 
-    defstate = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_STATE_DEF, NULL) - 6;
-    spatkstate = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_STATE_SPATK, NULL) - 6;
-    spdefstate = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_STATE_SPDEF, NULL) - 6;
-
-    level = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_LEVEL, NULL);
-
-    AttackingMon.species = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_SPECIES, NULL);
-    DefendingMon.species = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_SPECIES, NULL);
-    AttackingMon.hp = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_HP, NULL);
-    DefendingMon.hp = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_HP, NULL);
-    AttackingMon.maxhp = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_MAX_HP, NULL);
-    DefendingMon.maxhp = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_MAX_HP, NULL);
-    AttackingMon.condition = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_MAX_CONDITION, NULL);
-    DefendingMon.condition = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_MAX_CONDITION, NULL);
-    AttackingMon.ability = GetBattlerAbility(sp, attacker);
-    DefendingMon.ability = GetBattlerAbility(sp, defender);
-    AttackingMon.sex = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_SEX, NULL);
-    DefendingMon.sex = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_SEX, NULL);
-    AttackingMon.type1 = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_TYPE1, NULL);
-    DefendingMon.type1 = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_TYPE1, NULL);
-    AttackingMon.type2 = BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_TYPE2, NULL);
-    DefendingMon.type2 = BattlePokemonParamGet(sp, defender, BATTLE_MON_DATA_TYPE2, NULL);
-
-    item = GetBattleMonItem(sp, attacker);
-    AttackingMon.item_held_effect = BattleItemDataGet(sp, item, 1);
-    AttackingMon.item_power = BattleItemDataGet(sp, item, 2);
-
-    item = GetBattleMonItem(sp, defender);
-    DefendingMon.item_held_effect = BattleItemDataGet(sp, item, 1);
-    DefendingMon.item_power = BattleItemDataGet(sp, item, 2);
-
-    battle_type = BattleTypeGet(bw);
-
-    if ((MoldBreakerAbilityCheck(sp, attacker, defender, ABILITY_DISGUISE) == TRUE && sp->battlemon[defender].form_no == 0))
-        return 0;
-
-    if (((MoldBreakerAbilityCheck(sp, attacker, defender, ABILITY_ICE_FACE) == TRUE) && GetMoveSplit(sp, moveno) == SPLIT_PHYSICAL) && sp->battlemon[defender].form_no == 0)
-        return 0;
-
-    if (pow == 0)
-        movepower = sp->moveTbl[moveno].power;
-    else
-        movepower = pow;
-
-    // get the type
-    movetype = GetAdjustedMoveType(sp, attacker, moveno);
-    movepower = movepower * sp->damage_value / 10;
-
-    // handle charge
-    if ((sp->battlemon[attacker].effect_of_moves & MOVE_EFFECT_FLAG_CHARGE) && (movetype == TYPE_ELECTRIC))
-        movepower *= 2;
-
-    // handle helping hand
-    if (sp->oneTurnFlag[attacker].helping_hand_flag)
-        movepower = movepower * 15 / 10;
-
-    // handle technician
-    if ((AttackingMon.ability == ABILITY_TECHNICIAN) && (moveno != MOVE_STRUGGLE) && (movepower <= 60))
-        movepower = movepower * 15 / 10;
-
-    movesplit = GetMoveSplit(sp, moveno);
-
-    // handle huge power + pure power
-    if (AttackingMon.ability == ABILITY_PURE_POWER)
-        attack = attack * 2;
-
-    // handle cephelalgia surge
-    if (AttackingMon.ability == ABILITY_CEPHALALGIA_SURGE)
-    {
-        sp_attack = sp_attack * 2;
+    // handle Charge
+    if ((AttackingMon.effectOfMoves & MOVE_EFFECT_FLAG_CHARGE)
+    && (movetype == TYPE_ELECTRIC)) {
+        basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__2_0);
     }
 
-    // handle slow start
-    if ((AttackingMon.ability == ABILITY_SLOW_START)
-     && ((BattleWorkMonDataGet(bw, sp, 3, 0) - BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_SLOW_START_COUNTER, NULL)) < 3))
-        attack /= 2;
+    // handle Me First
+    if (sp->battlemon[attacker].moveeffect.meFirstFlag) {
+        if (sp->me_first_total_turns == sp->battlemon[attacker].moveeffect.meFirstCount) {
+            sp->battlemon[attacker].moveeffect.meFirstCount--;
+        }
 
-    // handle defeatist
-    if ((AttackingMon.ability == ABILITY_DEFEATIST) && (AttackingMon.hp <= AttackingMon.maxhp / 2))
-    {
-        attack /= 2;
-        sp_attack /= 2;
+        if ((sp->me_first_total_turns - sp->battlemon[attacker].moveeffect.meFirstCount) < 2) {
+            basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__1_5);
+        } else {
+            sp->battlemon[attacker].moveeffect.meFirstFlag = 0;
+        }
     }
 
-    //handle analytic
-    if (AttackingMon.ability == ABILITY_ANALYTIC)
-    {
-        for (i = 0; i < 4; i++)
-        {
-            if (attacker != i && sp->battlemon[i].hp != 0 && CalcSpeed(bw, sp, attacker, i, 0) == 0)
-            {
+    // Effects relative to a particular side of the field (Tailwind, Safeguard, Pledge combo effects, Wide Guard, etc.):
+
+    // Field effects (weather conditions, Terrains, Imprison, Ion Deluge, Magic Room, Gravity, etc.):
+
+    if (noCloudNineAndAirLock) {
+        if ((field_cond & (FIELD_STATUS_FOG | WEATHER_HAIL_ANY | WEATHER_SANDSTORM_ANY | WEATHER_RAIN_ANY | WEATHER_SNOW_ANY))
+        && (moveno == MOVE_SOLAR_BEAM || moveno == MOVE_SOLAR_BLADE)) {
+            basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__0_5);
+        }
+    }
+
+    // handle Terrain overlays
+    if (terrainOverlayNumberOfTurnsLeft > 0) {
+        switch (terrainOverlayType) {
+            case GRASSY_TERRAIN:
+                if (AttackingMon.isGrounded && movetype == TYPE_GRASS) {
+                    basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__1_3);
+                }
+                if (moveno == MOVE_EARTHQUAKE || moveno == MOVE_MAGNITUDE || moveno == MOVE_BULLDOZE) {
+                    basePowerModifier = QMul_RoundUp(basePowerModifier, UQ412__0_5);
+                }
                 break;
             }
         }
@@ -287,11 +552,12 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
         movepower = movepower * 130 / 100;
     }
 
-    // handle punk rock TODO uncomment
-    if (AttackingMon.ability == ABILITY_PUNK_ROCK && IsMoveSoundBased(sp->current_move_index))
-    {
-        movepower = movepower * 130 / 100;
-    }
+//    // handle punk rock TODO uncomment
+//    if (AttackingMon.ability == ABILITY_PUNK_ROCK && IsMoveSoundBased(sp->current_move_index))
+//    {
+//        movepower = movepower * 130 / 100;
+//        break;
+//    }
 
 
     // type boosting held items
@@ -334,12 +600,12 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     if ((DefendingMon.item_held_effect == HOLD_EFFECT_DITTO_DEF_UP) && (DefendingMon.species == SPECIES_DITTO))
         defense *= 2;
 
-    // handle gorilla tactics
+    // handle Gorilla Tactics
     if (AttackingMon.ability == ABILITY_GORILLA_TACTICS) {
         attack = attack * 150 / 100;
     }    
 
-    // handle assault vest
+    // Handle Assault Vest
     if ((DefendingMon.item_held_effect == HOLD_EFFECT_SPDEF_BOOST_NO_STATUS_MOVES)) {
         sp_defense = sp_defense * 150 / 100;
     }
@@ -403,7 +669,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     }
 
     // handle punching glove
-    if ((AttackingMon.item_held_effect == HOLD_EFFECT_INCREASE_PUNCHING_MOVE_DMG) && IsElementInArray(PunchingMovesTable, (u16 *)&moveno, NELEMS(PunchingMovesTable), sizeof(PunchingMovesTable[0])))
+    if ((AttackingMon.item_held_effect == HOLD_EFFECT_INCREASE_PUNCHING_MOVE_DMG) && IsElementInArray(IronFistMovesTable, (u16 *)&moveno, NELEMS(IronFistMovesTable), sizeof(IronFistMovesTable[0])))
     {
         movepower = movepower * (100 + AttackingMon.item_power) / 100;
     }
@@ -450,7 +716,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     // handle toxic boost
     if ((AttackingMon.ability == ABILITY_TOXIC_BOOST) && ((AttackingMon.condition & STATUS_FLAG_BADLY_POISONED) || (AttackingMon.condition & STATUS_FLAG_POISONED)))
     {
-        attack = attack * 130 / 100;
+        attack = attack * 150 / 100;
     }
 
     // handle flare boost
@@ -460,14 +726,14 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     }
 
     // handle tough claws
-    if ((AttackingMon.ability == ABILITY_TOUGH_CLAWS) && (IsContactBeingMade(bw, sp)))
+    if ((AttackingMon.ability == ABILITY_TOUGH_CLAWS) && (sp->moveTbl[sp->current_move_index].flag & FLAG_CONTACT))
     {
         movepower = movepower * 130 / 100;
     }
 
-    // handle fluffy
+    // Handle Fluffy
     if (DefendingMon.ability == ABILITY_FLUFFY) {
-        if (IsContactBeingMade(bw, sp)) {
+        if (sp->moveTbl[sp->current_move_index].flag & FLAG_CONTACT) {
             movepower = movepower * 50 / 100;
         }
 
@@ -564,12 +830,6 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
         movepower = movepower * 150 / 100;
     }
 
-    // handle harvest winds 
-    if (AttackingMon.ability == ABILITY_HARVEST_WINDS && ((movetype == TYPE_FLYING) || (movetype == TYPE_GRASS)))
-    {
-        movepower = movepower * 130 / 100;
-    }
-
     // if dark aura is present but not aura break
     if ((movetype == TYPE_DARK) && (CheckSideAbility(bw, sp, CHECK_ABILITY_ALL_HP, 0, ABILITY_DARK_AURA) != 0)
       && (CheckSideAbility(bw, sp, CHECK_ABILITY_ALL_HP, 0, ABILITY_AURA_BREAK) == 0))
@@ -592,12 +852,15 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
         movepower = movepower * 100 / 133;
 #endif
 
-    // handle steely spirit for the ally
-    if (movetype == TYPE_STEEL && GetBattlerAbility(sp, BATTLER_ALLY(attacker)) == ABILITY_STEELY_SPIRIT)
-    {
-        movepower = movepower * 150 / 100;
-    }
+    //=====End of Step 2=====
 
+    //=====Step 3: Attack Modifiers=====
+
+    // Step 3.1. handle Unaware
+    if (MoldBreakerAbilityCheckInternal(attacker, defender, AttackingMon.ability, DefendingMon.ability, moveno, movesplit, ABILITY_UNAWARE) == TRUE) {
+        AttackingMon.atkstate = 0;
+        AttackingMon.spatkstate = 0;
+    }
     // handle steely spirit for the attacker--can stack
     if (movetype == TYPE_STEEL && AttackingMon.ability == ABILITY_STEELY_SPIRIT)
     {
@@ -622,43 +885,83 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
         movepower = movepower * 75 / 100;
     }
 
-    if (MoveIsAffectedByNormalizeVariants(moveno)) {
-        // handle aerilate - 20% boost if a normal type move was changed to a flying type move.  does not boost flying type moves themselves
-        if (AttackingMon.ability == ABILITY_AERILATE && movetype == TYPE_FLYING && sp->moveTbl[moveno].type == TYPE_NORMAL) {
-            movepower = movepower * 120 / 100;
-        }
+#ifdef DEBUG_DAMAGE_CALC
+    debug_printf("\n=================\n");
+    debug_printf("[CalcBaseDamage] Step 3.5. Hustle\n");
+    debug_printf("[CalcBaseDamage] attack: %d\n", attack);
+#endif
 
-        // handle pixilate - 20% boost if a normal type move was changed to a fairy type move.  does not boost fairy type moves themselves
-        if (AttackingMon.ability == ABILITY_PIXILATE && movetype == TYPE_FAIRY && sp->moveTbl[moveno].type == TYPE_NORMAL) {
-            movepower = movepower * 120 / 100;
-        }
+    switch (movesplit) {
+        case SPLIT_PHYSICAL:
+            calculatedAttack = attack;
+            break;
+        case SPLIT_SPECIAL:
+            calculatedAttack = sp_attack;
+            break;
 
-        // handle galvanize - 20% boost if a normal type move was changed to an electric type move.  does not boost electric type moves themselves
-        if (AttackingMon.ability == ABILITY_GALVANIZE && movetype == TYPE_ELECTRIC && sp->moveTbl[moveno].type == TYPE_NORMAL) {
-            movepower = movepower * 120 / 100;
-        }
-
-        // handle refrigerate - 20% boost if a normal type move was changed to an ice type move.  does not boost ice type moves themselves
-        if (AttackingMon.ability == ABILITY_REFRIGERATE && movetype == TYPE_ICE && sp->moveTbl[moveno].type == TYPE_NORMAL) {
-            movepower = movepower * 120 / 100;
-        }
-
-        // handle normalize - 20% boost if a normal type move is used (and it changes types to normal too)
-        if (AttackingMon.ability == ABILITY_NORMALIZE && movetype == TYPE_NORMAL) {
-            movepower = movepower * 120 / 100;
-        }
+        default:
+            GF_ASSERT(movesplit != SPLIT_STATUS);
+            break;
     }
 
-    // handle heatproof/dry skin
-    if ((movetype == TYPE_FIRE) && (MoldBreakerAbilityCheck(sp, attacker, defender, ABILITY_HEATPROOF) == TRUE))
-    {
-        movepower /= 2;
-    }
+    // Step 3.6. Remaining attack modifiers
 
-    if ((movetype == TYPE_FIRE) && (MoldBreakerAbilityCheck(sp, attacker, defender, ABILITY_DRY_SKIN) == TRUE))
-    {
-        movepower = movepower * 125 / 100;
-    }
+    // Abilities
+    for (i = 0; i < maxBattlers; i++) {
+        if (attacker == damageCalc->rawSpeedNonRNGClientOrder[i]) {
+            // handle Slow Start
+            if ((AttackingMon.ability == ABILITY_SLOW_START)
+            && ((BattleWorkMonDataGet(bw, sp, 3, 0) - BattlePokemonParamGet(sp, attacker, BATTLE_MON_DATA_SLOW_START_COUNTER, NULL)) < 5)
+            && (movesplit == SPLIT_PHYSICAL || MoveIsZMove(moveno))) {
+                attackModifier = QMul_RoundUp(attackModifier, UQ412__0_5);
+            }
+
+            // handle Defeatist
+            if ((AttackingMon.ability == ABILITY_DEFEATIST) && (AttackingMon.hp <= AttackingMon.maxhp / 2)) {
+                attackModifier = QMul_RoundUp(attackModifier, UQ412__0_5);
+            }
+
+            // handle weather boosts
+            if (noCloudNineAndAirLock) {
+                if ((field_cond & WEATHER_SUNNY_ANY)
+                && (AttackingMon.ability == ABILITY_SOLAR_POWER)
+                && (movesplit == SPLIT_SPECIAL)) {
+                    attackModifier = QMul_RoundUp(attackModifier, UQ412__1_5);
+                }
+                if ((!flowerGiftAppliedForAttackModifier)
+                && (field_cond & WEATHER_SUNNY_ANY)
+                && (AttackingMon.ability == ABILITY_FLOWER_GIFT)
+                && (movesplit == SPLIT_PHYSICAL)) {
+                    flowerGiftAppliedForAttackModifier = TRUE;
+                    attackModifier = QMul_RoundUp(attackModifier, UQ412__1_5);
+                }
+                // handle Orichalcum Pulse
+                // https://www.smogon.com/forums/threads/scarlet-violet-battle-mechanics-research.3709545/page-20#post-9423025
+                if ((AttackingMon.ability == ABILITY_ORICHALCUM_PULSE)
+                && (field_cond & WEATHER_SUNNY_ANY)
+                // https://www.smogon.com/forums/threads/scarlet-violet-battle-mechanics-research.3709545/post-9426805
+                // TODO: For Orichalcum Pulse itself - still shows "sending its ancient pulse into a frenzy!" message even with Utility Umbrella disabling the attack boost.
+                && !(AttackingMon.item_held_effect == HOLD_EFFECT_UNAFFECTED_BY_RAIN_OR_SUN)
+                && (movesplit == SPLIT_PHYSICAL)) {
+                    attackModifier = QMul_RoundUp(attackModifier, UQ412__1_3333);
+                }
+            }
+
+            // handle Guts
+            // TODO: Is Freeze affected? (It doesn't matter)
+            if ((AttackingMon.ability == ABILITY_GUTS) && (AttackingMon.condition) && (movesplit == SPLIT_PHYSICAL)) {
+                attackModifier = QMul_RoundUp(attackModifier, UQ412__1_5);
+            }
+
+            // handle Overgrow
+            if ((movetype == TYPE_GRASS) && (AttackingMon.ability == ABILITY_OVERGROW) && (AttackingMon.hp <= AttackingMon.maxhp / 3)) {
+                attackModifier = QMul_RoundUp(attackModifier, UQ412__1_5);
+            }
+
+            // handle Blaze
+            if ((movetype == TYPE_FIRE) && (AttackingMon.ability == ABILITY_BLAZE) && (AttackingMon.hp <= AttackingMon.maxhp / 3)) {
+                attackModifier = QMul_RoundUp(attackModifier, UQ412__1_5);
+            }
 
     // handle simple
     if (AttackingMon.ability == ABILITY_SIMPLE)
@@ -738,9 +1041,9 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     }
 
     // handle iron fist
-    if ((AttackingMon.ability == ABILITY_IRON_FIST) && IsElementInArray(PunchingMovesTable, (u16 *)&moveno, NELEMS(PunchingMovesTable), sizeof(PunchingMovesTable[0])))
+    if ((AttackingMon.ability == ABILITY_IRON_FIST) && IsElementInArray(IronFistMovesTable, (u16 *)&moveno, NELEMS(IronFistMovesTable), sizeof(IronFistMovesTable[0])))
     {
-        movepower = movepower * 13 / 10;
+        movepower = movepower * 12 / 10;
     }
 
     // handle strong jaw
@@ -758,15 +1061,8 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     // handle sharpness
     if ((AttackingMon.ability == ABILITY_SHARPNESS) && IsElementInArray(SharpnessMovesTable, (u16 *)&moveno, NELEMS(SharpnessMovesTable), sizeof(SharpnessMovesTable[0])))
     {
-        movepower = movepower * 13 / 10;
+        movepower = movepower * 15 / 10;
     }
-
-    // handle lethal legs
-    if ((AttackingMon.ability == ABILITY_LETHAL_LEGS) && IsElementInArray(KickMovesTable, (u16 *)&moveno, NELEMS(KickMovesTable), sizeof(KickMovesTable[0])))
-    {
-        movepower = movepower * 13 / 10;
-    }
-
 
     // handle water bubble
     if ((AttackingMon.ability == ABILITY_WATER_BUBBLE) && (movetype == TYPE_WATER))
@@ -791,7 +1087,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
       && (DefendingMon.ability != ABILITY_BEADS_OF_RUIN))
         sp_defense = sp_defense * 75 / 100;
 
-    // handle field effects interacting with their moves
+    // Handle field effects interacting with their moves
     if (sp->terrainOverlay.numberOfTurnsLeft > 0) {
         switch (sp->terrainOverlay.type)
         {
@@ -805,20 +1101,22 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
                 movepower = movepower * 15 / 10;
             }
             break;
-        case PSYCHIC_TERRAIN:
-            if (IsClientGrounded(sp, attacker) && moveno == MOVE_EXPANDING_FORCE) {
-                movepower = movepower * 15 / 10;
+        case SPLIT_SPECIAL:
+            // Handle Vessel of Ruin
+            // TODO: confirm location, Mold Breaker interactions
+            // https://www.smogon.com/forums/threads/scarlet-violet-battle-mechanics-research.3709545/post-9425737
+            if ((damageCalc->fieldHasVesselOfRuin) && (DefendingMon.ability != ABILITY_VESSEL_OF_RUIN)) {
+                if (((calculatedAttack * UQ412__0_75) & 0xFFFu) <= 0x800) {
+                    calculatedAttack = (calculatedAttack * UQ412__0_75) >> 12;
+                } else {
+                    calculatedAttack = ((calculatedAttack * UQ412__0_75) >> 12) + 1;
+                }
             }
             break;
         default:
+            GF_ASSERT(movesplit != SPLIT_STATUS);
             break;
         }
-    }
-
-    // handle grav apple
-    if ((sp->field_condition & FIELD_STATUS_GRAVITY) && (moveno == MOVE_GRAV_APPLE))
-    {
-        movepower = movepower * 15 / 10;
     }
 
     // handle weather boosts
@@ -857,8 +1155,8 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     getEquivalentAttackAndDefense(sp, attack, defense, sp_attack, sp_defense, atkstate, defstate, spatkstate, spdefstate, &movesplit, attacker, defender, critical, moveno, &equivalentAttack, &equivalentDefense);
 
     //// halve the defense if using selfdestruct/explosion
-    if (sp->moveTbl[moveno].effect == MOVE_EFFECT_HALVE_DEFENSE)
-        defense = defense / 2;
+    //if (sp->moveTbl[moveno].effect == MOVE_EFFECT_HALVE_DEFENSE)
+    //    defense = defense / 2;
 
     damage = equivalentAttack * movepower;
     damage *= (level * 2 / 5 + 2);
@@ -866,141 +1164,127 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
     damage = damage / equivalentDefense;
     damage /= 50;
 
-    // handle parental bond
-    if (sp->oneTurnFlag[attacker].parental_bond_flag == 2) {
+    // Handle Parental Bond
+    if (sp->battlemon[attacker].parental_bond_flag == 2) {
         damage /= 4;
     }
-    switch (sp->oneTurnFlag[attacker].parental_bond_flag) {
+    switch (sp->battlemon[attacker].parental_bond_flag) {
         case 1:
-            sp->oneTurnFlag[attacker].parental_bond_flag++;
-            sp->oneTurnFlag[attacker].parental_bond_is_active = TRUE; // after first hit, set this flag just in case the ability is nullified after the first one
+            sp->battlemon[attacker].parental_bond_flag++;
+            sp->battlemon[attacker].parental_bond_is_active = TRUE; // after first hit, set this flag just in case the ability is nullified after the first one
             break;
+        case SPLIT_SPECIAL:
+            calculatedDefense = sp_defense;
+            break;
+
         default:
-            sp->oneTurnFlag[attacker].parental_bond_flag = 0;
+            sp->battlemon[attacker].parental_bond_flag = 0;
             break;
     }
 
-    // handle physical moves
-    if (movesplit == SPLIT_PHYSICAL)
-    {
-        // burns halve physical damage.  this is ignored by guts and facade (as of gen 6)
-        if ((AttackingMon.condition & STATUS_FLAG_BURNED) && (AttackingMon.ability != ABILITY_GUTS) && (moveno != MOVE_FACADE))
-        {
-            damage /= 2;
-        }
+    // Step 4.8. Remaining defense modifiers
 
-        // handle reflect
-        if (((side_cond & SIDE_STATUS_REFLECT) != 0)
-         && (critical == 1)
-         && (sp->moveTbl[moveno].effect != MOVE_EFFECT_REMOVE_SCREENS)
-         && (AttackingMon.ability != ABILITY_INFILTRATOR))
-        {
-            if ((battle_type & BATTLE_TYPE_DOUBLE) && (CheckNumMonsHit(bw, sp, 1, defender) == 2))
-            {
-                damage = damage * 2 / 3;
-            }
-            else
-            {
-                damage /= 2;
-            }
-        }
-    }
-    else// if (movesplit == SPLIT_SPECIAL) // same as above, handle special moves
-    {
-        // handle light screen
-        if (((side_cond & SIDE_STATUS_LIGHT_SCREEN) != 0)
-         && (critical == 1)
-         && (sp->moveTbl[moveno].effect != MOVE_EFFECT_REMOVE_SCREENS)
-         && (AttackingMon.ability != ABILITY_INFILTRATOR))
-        {
-            if ((battle_type & BATTLE_TYPE_DOUBLE) && (CheckNumMonsHit(bw, sp, 1, defender) == 2))
-            {
-                damage = damage * 2 / 3;
-            }
-            else
-            {
-                damage /= 2;
-            }
-        }
-    }
-
-    if ((battle_type & BATTLE_TYPE_DOUBLE) &&
-        (sp->moveTbl[moveno].target == 0x4) &&
-        (CheckNumMonsHit(bw, sp, 1, defender) == 2))
-    {
-        damage = damage * 3 / 4;
-    }
-
-    if ((battle_type & BATTLE_TYPE_DOUBLE) &&
-        (sp->moveTbl[moveno].target == 0x8) &&
-        (CheckNumMonsHit(bw, sp, 1, defender) >= 2))
-    {
-        damage = damage * 3 / 4;
-    }
-
-    // handle weather inate type boosts
-    if ((CheckSideAbility(bw, sp, CHECK_ABILITY_ALL_HP, 0, ABILITY_CLOUD_NINE) == 0) &&
-        (CheckSideAbility(bw, sp, CHECK_ABILITY_ALL_HP, 0, ABILITY_AIR_LOCK) == 0))
-    {
-        if (field_cond & WEATHER_RAIN_ANY) // handle rain boosts
-        {
-            switch (movetype)
-            {
-            case TYPE_FIRE:
-                damage /= 2;
-                break;
-            case TYPE_WATER:
-                damage = damage * 15 / 10;
-                break;
-            }
-        }
-
-        if ((field_cond & (FIELD_STATUS_FOG | WEATHER_HAIL_ANY | WEATHER_SANDSTORM_ANY | WEATHER_RAIN_ANY | WEATHER_SNOW_ANY)) && (moveno == MOVE_SOLAR_BEAM || moveno == MOVE_SOLAR_BLADE)) // solar beam nerf
-        {
-            damage /= 2;
-        }
-
-        if (field_cond & WEATHER_SUNNY_ANY) // sun boosts fire but nerfs water
-        {
-            switch (movetype)
-            {
-            case TYPE_FIRE:
-                damage = damage * 15 / 10;
-                break;
-            case TYPE_WATER:
-                // If the current weather is Sunny Day and the user is not holding Utility Umbrella, this move's damage is multiplied by 1.5 instead of halved for being Water type.
-                if (moveno == MOVE_HYDRO_STEAM && item != ITEM_UTILITY_UMBRELLA) {
-                    damage = damage * 15 / 10;
-                } else {
-                    damage /= 2;
+    // Abilities
+    for (i = 0; i < maxBattlers; i++) {
+        if (defender == damageCalc->rawSpeedNonRNGClientOrder[i]) {
+            // handle weather boosts
+            if (noCloudNineAndAirLock) {
+                if ((!flowerGiftAppliedForDefenseModifier)
+                && (field_cond & WEATHER_SUNNY_ANY)
+                && (MoldBreakerAbilityCheck(sp, attack, defender, ABILITY_FLOWER_GIFT))
+                && (movesplit == SPLIT_SPECIAL)) {
+                    flowerGiftAppliedForDefenseModifier = TRUE;
+                    defenseModifier = QMul_RoundUp(defenseModifier, UQ412__1_5);
                 }
-                break;
+            }
+
+            // handle Marvel Scale
+            if ((MoldBreakerAbilityCheckInternal(attacker, defender, AttackingMon.ability, DefendingMon.ability, moveno, movesplit, ABILITY_MARVEL_SCALE) == TRUE)
+            && (DefendingMon.condition)
+            && (movesplit == SPLIT_PHYSICAL)) {
+                defenseModifier = QMul_RoundUp(defenseModifier, UQ412__1_5);
+            }
+
+            // handle Grass Pelt
+            if ((MoldBreakerAbilityCheckInternal(attacker, defender, AttackingMon.ability, DefendingMon.ability, moveno, movesplit, ABILITY_GRASS_PELT) == TRUE)
+            && (terrainOverlayType == GRASSY_TERRAIN && terrainOverlayNumberOfTurnsLeft > 0)
+            && (movesplit == SPLIT_PHYSICAL)) {
+                defenseModifier = QMul_RoundUp(defenseModifier, UQ412__1_5);
+            }
+
+            // handle Fur Coat
+            if ((MoldBreakerAbilityCheckInternal(attacker, defender, AttackingMon.ability, DefendingMon.ability, moveno, movesplit, ABILITY_FUR_COAT) == TRUE)
+            && (movesplit == SPLIT_PHYSICAL)) {
+                defenseModifier = QMul_RoundUp(defenseModifier, UQ412__2_0);
+            }
+
+            // handle Protosynthesis and Quark Drive
+            // https://www.smogon.com/forums/threads/scarlet-violet-battle-mechanics-research.3709545/page-20#post-9423025
+            if ((DefendingMon.ability == ABILITY_PROTOSYNTHESIS || DefendingMon.ability == ABILITY_QUARK_DRIVE)
+            && ((movesplit == SPLIT_PHYSICAL && DefendingMon.paradoxBoostedStat == STAT_DEFENSE) ||
+                (movesplit == SPLIT_SPECIAL && DefendingMon.paradoxBoostedStat == STAT_SPDEF))) {
+                defenseModifier = QMul_RoundUp(defenseModifier, UQ412__1_3);
             }
         }
 
-        if (AttackingMon.ability == ABILITY_SAND_FORCE // sand force boosts damage in sand for certain move types
-         && field_cond & WEATHER_SANDSTORM_ANY
-         && (movetype == TYPE_GROUND || movetype == TYPE_ROCK || movetype == TYPE_STEEL))
-        {
-            damage = damage * 130 / 100;
+        if (BATTLER_ALLY(defender) == damageCalc->rawSpeedNonRNGClientOrder[i]) {
+            // handle weather boosts
+            if (noCloudNineAndAirLock) {
+                if ((!flowerGiftAppliedForDefenseModifier)
+                    && (field_cond & WEATHER_SUNNY_ANY)
+                    && (MoldBreakerAbilityCheck(sp, attacker, BATTLER_ALLY(defender), ABILITY_FLOWER_GIFT))
+                    && (movesplit == SPLIT_SPECIAL)) {
+                    flowerGiftAppliedForDefenseModifier = TRUE;
+                    defenseModifier = QMul_RoundUp(defenseModifier, UQ412__1_5);
+                }
+            }
         }
     }
 
-    if ((BattlePokemonParamGet(sp, attacker, BATTLE_MON_FLASH_FIRE_ACTIVATED, NULL)) && (movetype == TYPE_FIRE))
-    {
-        damage = damage * 15 / 10;
-    }
+    // Items
+    for (i = 0; i < maxBattlers; i++) {
+        if (defender == damageCalc->rawSpeedNonRNGClientOrder[i]) {
+            // handle Eviolite
+            if (DefendingMon.item_held_effect == HOLD_EFFECT_EVIOLITE) {
+                u16 speciesWithForm;
+                speciesWithForm = PokeOtherFormMonsNoGet(DefendingMon.species, DefendingMon.form);
 
-    // handle multiscale
-    if ((DefendingMon.ability == ABILITY_MULTISCALE) && (DefendingMon.hp == DefendingMon.maxhp))
-    {
-        damage /= 2;
-    }
+                struct Evolution *evoTable;
+                evoTable = sys_AllocMemory(0, MAX_EVOS_PER_POKE * sizeof(struct Evolution));
+                ArchiveDataLoad(evoTable, ARC_EVOLUTIONS, speciesWithForm);
 
-    // handle shadow shield
-    if ((DefendingMon.ability == ABILITY_SHADOW_SHIELD) && (DefendingMon.hp == DefendingMon.maxhp))
-    {
-        damage /= 2;
+                // If a Pokémon has any evolutions, there should be an entry at the top that isn't EVO_NONE.
+                // In that case, the Pokémon is capable of evolving, and so the effect of Eviolite should apply.
+                if (evoTable[0].method != EVO_NONE) {
+                    defenseModifier = QMul_RoundUp(defenseModifier, UQ412__1_5);
+                }
+
+                sys_FreeMemoryEz(evoTable);
+            }
+
+            // handle Assault Vest
+            if ((DefendingMon.item_held_effect == HOLD_EFFECT_SPDEF_BOOST_NO_STATUS_MOVES) && (movesplit == SPLIT_SPECIAL)) {
+                defenseModifier = QMul_RoundUp(defenseModifier, UQ412__1_5);
+            }
+
+            // handle Deep Sea Scale
+            if ((DefendingMon.item_held_effect == HOLD_EFFECT_CLAMPERL_SPDEF)
+            && (DefendingMon.species == SPECIES_CLAMPERL)
+            // it’s not a Ditto/Smeargle/Mew Transformed into the species
+            && !(AttackingMon.condition2 & STATUS2_TRANSFORMED)
+            && (movesplit == SPLIT_SPECIAL)) {
+                defenseModifier = QMul_RoundUp(defenseModifier, UQ412__2_0);
+            }
+
+            // handle Metal Powder
+            if ((DefendingMon.item_held_effect == HOLD_EFFECT_DITTO_DEF_UP)
+            && (DefendingMon.species == SPECIES_DITTO)
+            // it’s not a Ditto/Smeargle/Mew Transformed into the species
+            && !(AttackingMon.condition2 & STATUS2_TRANSFORMED)
+            && (movesplit == SPLIT_PHYSICAL)) {
+                defenseModifier = QMul_RoundUp(defenseModifier, UQ412__2_0);
+            }
+        }
     }
 
     // handle water bubble
@@ -1022,7 +1306,7 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
         damage /= 2;
     }
       
-    // handle field effects
+    // Handle field effects
     if (sp->terrainOverlay.numberOfTurnsLeft > 0) {
         switch (sp->terrainOverlay.type)
         {
@@ -1034,25 +1318,51 @@ int CalcBaseDamage(void *bw, struct BattleStruct *sp, int moveno, u32 side_cond,
                 damage /= 2;
             }
             break;
-        case ELECTRIC_TERRAIN:
-            if (IsClientGrounded(sp, attacker) && movetype == TYPE_ELECTRIC) {
-                damage = damage * 130 / 100;
-            }
-            break;
-        case MISTY_TERRAIN:
-            if (IsClientGrounded(sp, defender) && movetype == TYPE_DRAGON) {
-                damage /= 2;
-            }
-            break;
-        case PSYCHIC_TERRAIN:
-            if (IsClientGrounded(sp, attacker) && movetype == TYPE_PSYCHIC) {
-                damage = damage * 130 / 100;
+        case SPLIT_SPECIAL:
+            // Handle Beads of Ruin
+            // TODO: confirm location
+            // https://www.smogon.com/forums/threads/scarlet-violet-battle-mechanics-research.3709545/post-9425737
+            if ((damageCalc->fieldHasBeadsOfRuin) && (DefendingMon.ability != ABILITY_BEADS_OF_RUIN)) {
+                if (((calculatedDefense * UQ412__0_75) & 0xFFFu) <= 0x800) {
+                    calculatedDefense = (calculatedDefense * UQ412__0_75) >> 12;
+                } else {
+                    calculatedDefense = ((calculatedDefense * UQ412__0_75) >> 12) + 1;
+                }
             }
             break;
         default:
+            GF_ASSERT(movesplit != SPLIT_STATUS);
             break;
-        }
     }
 
-    return damage + 2;
+#ifdef DEBUG_DAMAGE_CALC
+    debug_printf("\n=================\n");
+    debug_printf("[CalcBaseDamage] Step 4.9. Sword of Ruin/Beads of Ruin\n");
+    debug_printf("[CalcBaseDamage] calculatedDefense: %d\n", calculatedDefense);
+#endif
+
+    //=====End of Step 4=====
+
+    //=====Step 5. Base Damage=====
+
+    baseDamage = ((2 * AttackingMon.level / 5) + 2);
+
+    // https://www.smogon.com/forums/threads/ultra-sun-ultra-moon-battle-mechanics-research-read-post-2.3620030/post-8198555
+    if (calculatedDefense != 0) {
+        baseDamage = (baseDamage * movepower * calculatedAttack / calculatedDefense);
+    } else {
+        baseDamage = 0;
+    }
+
+    baseDamage = (baseDamage / 50) + 2;
+
+#ifdef DEBUG_DAMAGE_CALC
+    debug_printf("\n=================\n");
+    debug_printf("[CalcBaseDamage] Step 5. Base Damage\n");
+    debug_printf("[CalcBaseDamage] baseDamage: %d\n", baseDamage);
+#endif
+
+    //=====End of Step 5=====
+
+    return baseDamage;
 }

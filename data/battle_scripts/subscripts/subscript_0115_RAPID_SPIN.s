@@ -3,5 +3,5 @@
 .data
 
 _000:
-    RapidSpin 
+    RapidSpin
     End 

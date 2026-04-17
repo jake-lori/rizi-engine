@@ -78,7 +78,11 @@ VecFx32;
 #define FALLTHROUGH __attribute__ ((fallthrough))
 #define PACKED __attribute__((packed))
 
+<<<<<<< HEAD
 #ifdef NOCASH_GBA_PRINT
+=======
+#if defined(NOCASH_GBA_PRINT) && !defined (DEBUG_BATTLE_SCENARIOS)
+>>>>>>> upstream/main
 #define NOCASHGBAIDADDR 0x04FFFA00
 #define NOCASHGBAPRINTADDR1 0x04FFFA14 // does not automatically add the newline
 #define NOCASHGBAPRINTADDR2 0x04FFFA18 // does automatically add the newline
@@ -103,6 +107,23 @@ extern u8 DebugTextBuf[0xAC];
 
 #define GF_ASSERT(cond) if (!(cond)) { }
 //#define GF_ASSERT(cond) (cond) ? 0 : GF_ASSERT_INTERNAL()
+
+struct HeapInfo {
+    void **heapHandles;
+    void *parentHeapHandles;
+    void **subHeapRawPtrs;
+    u16 *numMemBlocks;
+    u8 *heapIdxs;
+    u16 totalNumHeaps;
+    u16 nTemplates;
+    u16 maxHeaps;
+    u16 unallocatedHeapId;
+};
+
+u32 LONG_CALL OS_DisableInterrupts(void);
+void *LONG_CALL NNS_FndAllocFromExpHeapEx(void *heap, u32 size, u32 align);
+void LONG_CALL OS_RestoreInterrupts(u32);
+extern struct HeapInfo sHeapInfo;
 
 void LONG_CALL GF_ASSERT_INTERNAL();
 u16 LONG_CALL gf_rand(void);
@@ -211,6 +232,10 @@ static inline void GXS_SetVisibleWnd(int window) {
 static inline u16 PAD_Read(void) {
     return (u16)(((reg_PAD_KEYINPUT | *(vu16 *)HW_BUTTON_XY_BUF) ^
                   (PAD_PLUS_KEY_MASK | PAD_BUTTON_MASK)) & (PAD_PLUS_KEY_MASK | PAD_BUTTON_MASK));
+}
+
+static inline void G2_SetBG0Priority(int priority) {
+    reg_G2_BG0CNT = (u16)((reg_G2_BG0CNT & ~0x3) | (priority << 0));
 }
 
 #define RGB(r, g, b) (((b & 0x1F) << 10) | ((g & 0x1F) << 5) | (r & 0x1F))

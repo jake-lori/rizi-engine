@@ -60,9 +60,9 @@ void AITypeCalc(struct BattleStruct *sp, u32 move, u32 type, int atkAbility, int
     else
     {
         i = 0;
-        while (TypeEffectivenessTable[i][0] != 0xff)
+        while (TypeEffectivenessTable[i][0] != TYPE_ENDTABLE)
         {
-            if (TypeEffectivenessTable[i][0] == 0xfe)
+            if (TypeEffectivenessTable[i][0] == TYPE_FORESIGHT)
             {
                 if (atkAbility == ABILITY_SCRAPPY || atkAbility == ABILITY_MINDS_EYE)
                 {
@@ -81,14 +81,16 @@ void AITypeCalc(struct BattleStruct *sp, u32 move, u32 type, int atkAbility, int
                 {
                     if (AI_ShouldUseNormalTypeEffCalc(sp, held_effect, i) == TRUE)
                     {
-                        AI_TypeCheckCalc(TypeEffectivenessTable[i][2], flag);
+                        u8 typeEffectiveness = UpdateTypeEffectiveness(move, held_effect, type1, TypeEffectivenessTable[i][2]);
+                        AI_TypeCheckCalc(typeEffectiveness, flag);
                     }
                 }
                 if ((TypeEffectivenessTable[i][1] == type2) && (type1 != type2)) // haven't already run the type yet
                 {
                     if (AI_ShouldUseNormalTypeEffCalc(sp, held_effect, i) == TRUE)
                     {
-                        AI_TypeCheckCalc(TypeEffectivenessTable[i][2], flag);
+                        u8 typeEffectiveness = UpdateTypeEffectiveness(move, held_effect, type2, TypeEffectivenessTable[i][2]);
+                        AI_TypeCheckCalc(typeEffectiveness, flag);
                     }
                 }
             }

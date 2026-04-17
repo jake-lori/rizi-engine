@@ -133,7 +133,7 @@
 #define MOVE_EFFECT_REMOVE_HAZARDS_AND_BINDING              129
 #define MOVE_EFFECT_10_DAMAGE_FLAT                          130
 #define MOVE_EFFECT_UNUSED_131                              131
-#define MOVE_EFFECT_HEAL_HALF_MORE_IN_SUN                   132
+#define MOVE_EFFECT_HEAL_HALF_DIFFERENT_IN_WEATHER          132
 #define MOVE_EFFECT_UNUSED_133                              133
 #define MOVE_EFFECT_UNUSED_134                              134
 #define MOVE_EFFECT_RANDOM_TYPE_BASED_ON_IVS                135
@@ -296,7 +296,7 @@
 #define MOVE_EFFECT_ATK_SP_ATK_SPEED_UP_2_DEF_SP_DEF_DOWN   290
 #define MOVE_EFFECT_USER_DEF_SP_DEF_SPEED_DOWN_HIT          291
 #define MOVE_EFFECT_HEAVY_SLAM                              292
-#define MOVE_EFFECT_CONFUSE_AND_CRASH_IF_MISS               293
+#define MOVE_EFFECT_CONFUSE_HIT_CRASH_ON_MISS               293
 #define MOVE_EFFECT_APPLY_TERRAINS                          294
 #define MOVE_EFFECT_ATK_SP_ATK_UP                           295
 #define MOVE_EFFECT_HIT_TWICE_AND_FLINCH                    296
@@ -330,20 +330,100 @@
 #define MOVE_EFFECT_CHARGE_TURN_SP_ATK_UP					324
 #define MOVE_EFFECT_CHARGE_TURN_SP_ATK_UP_RAIN_SKIPS        325
 #define MOVE_EFFECT_STICKY_WEB                              326
+#define MOVE_EFFECT_ATK_UP_3                                327
+#define MOVE_EFFECT_DEF_UP_3                                328
+#define MOVE_EFFECT_SPEED_UP_3                              329
+#define MOVE_EFFECT_SP_ATK_UP_3                             330
+#define MOVE_EFFECT_SP_DEF_UP_3                             331
+#define MOVE_EFFECT_ACC_UP_3                                332
+#define MOVE_EFFECT_EVA_UP_3                                333
+#define MOVE_EFFECT_ATK_DOWN_3                              334
+#define MOVE_EFFECT_DEF_DOWN_3                              335
+#define MOVE_EFFECT_SPEED_DOWN_3                            336
+#define MOVE_EFFECT_SP_ATK_DOWN_3                           337
+#define MOVE_EFFECT_SP_DEF_DOWN_3                           338
+#define MOVE_EFFECT_ACC_DOWN_3                              339
+#define MOVE_EFFECT_EVA_DOWN_3                              340
+#define MOVE_EFFECT_HURRICANE                               341
+#define MOVE_EFFECT_USER_DEF_DOWN_HIT                       342
+#define MOVE_EFFECT_USER_DEF_DOWN_HIT_REMOVE_PROTECT        343
+#define MOVE_EFFECT_ATK_DEF_SPEED_UP                        344
+#define MOVE_EFFECT_POLTERGEIST                             345
+#define MOVE_EFFECT_RAISE_ALL_STATS_LOSE_THIRD_MAX_HP       346
+#define MOVE_EFFECT_RECOVER_THREE_QUARTERS_DAMAGE_DEALT     347
+#define MOVE_EFFECT_RECOVER_HALF_DAMAGE_DEALT_BURN_HIT      348
+#define MOVE_EFFECT_FICKLE_BEAM	                            349
+#define MOVE_EFFECT_SLEEP_POISON_PARALYZE_HIT               350
+#define MOVE_EFFECT_PREVENT_ESCAPE_HIT                      351
+#define MOVE_EFFECT_PREVENT_ESCAPE_BOTH_HIT                 352
+#define MOVE_EFFECT_STEALTH_ROCK_HIT                        353
+#define MOVE_EFFECT_SET_SPIKES_HIT                          354
+#define MOVE_EFFECT_USER_SPEED_DOWN_2_HIT                   355
+#define MOVE_EFFECT_BLEAKWIND_STORM                         356
+#define MOVE_EFFECT_WILDBOLT_STORM                          357
+#define MOVE_EFFECT_SANDSEAR_STORM                          358
+#define MOVE_EFFECT_TOXIC_THREAD                            359
+#define MOVE_EFFECT_MAKE_IT_RAIN                            360
+#define MOVE_EFFECT_VENOM_DRENCH                            361
+#define MOVE_EFFECT_ATK_SP_ATK_DOWN                         362
+#define MOVE_EFFECT_CHARGE_TURN_PARALYZE_HIT                363
+#define MOVE_EFFECT_CHARGE_TURN_BURN_HIT                    364
+#define MOVE_EFFECT_QUARTER_HP                              365
+#define MOVE_EFFECT_HIT_THREE_TIMES_ALWAYS_CRITICAL         366
+#define MOVE_EFFECT_TAKE_HEART                              367
+#define MOVE_EFFECT_HIGH_CRITICAL_RAISE_SPEED_HIT           368
+#define MOVE_EFFECT_MORTAL_SPIN                             369
+#define MOVE_EFFECT_TIDY_UP                                 370
+#define MOVE_EFFECT_PROTECT_USER_SIDE                       371
+#define MOVE_EFFECT_INCINERATE                              372
+#define MOVE_EFFECT_FIRST_TURN_ONLY                         373
+#define MOVE_EFFECT_ADD_TYPE_GRASS                          374
+#define MOVE_EFFECT_ADD_TYPE_GHOST                          375
+#define MOVE_EFFECT_CHANGE_TO_PSYCHIC_TYPE                  376
+#define MOVE_EFFECT_SET_AURORA_VEIL                         377
+#define MOVE_EFFECT_STRENGTH_SAP							378
+#define MOVE_EFFECT_HEAL_TARGET								379
+#define MOVE_EFFECT_POLLEN_PUFF								380
+#define MOVE_EFFECT_COACHING								381
+#define MOVE_EFFECT_DOUBLE_POWER_IF_FASTER					382
+#define MOVE_EFFECT_LIFE_DEW								383
+#define MOVE_EFFECT_ENTRAINMENT								384
+#define MOVE_EFFECT_HOWL							      	385
+#define MOVE_EFFECT_DECORATE								386
+#define MOVE_EFFECT_END_TERRAIN                             387
+#define MOVE_EFFECT_FELL_STINGER                            388
+#define MOVE_EFFECT_PARTING_SHOT                            389
+#define MOVE_EFFECT_CLEAR_SMOG                              390
+#define MOVE_EFFECT_ION_DELUGE                              391
+#define MOVE_EFFECT_ION_DELUGE_HIT                          392
+#define MOVE_EFFECT_REMOVE_USER_FIRE_TYPE_HIT               393
+#define MOVE_EFFECT_REMOVE_USER_ELECTRIC_TYPE_HIT           394
+#define MOVE_EFFECT_FORCE_SWITCH_HIT                        395
+#define MOVE_EFFECT_BELCH                                   396
+#define MOVE_EFFECT_STUFF_CHEEKS                            397
+#define MOVE_EFFECT_POWDER                                  398
+#define MOVE_EFFECT_LASER_FOCUS                             399
+#define MOVE_EFFECT_GLAIVE_RUSH                             400 
+#define MOVE_EFFECT_THROAT_CHOP                             401
+
+#define MAX_BASE_MOVE_EFFECT_NUM                            401
+
+// define your custom move effects below like this
+// #define MOVE_EFFECT_CUSTOM_1 (MAX_BASE_MOVE_EFFECT_NUM + 1)
 
 
 
-#define MOVE_TARGET_SELECTED             0x0000
-#define MOVE_TARGET_DEPENDS              0x0001
-#define MOVE_TARGET_RANDOM               0x0002
-#define MOVE_TARGET_BOTH                 0x0004
-#define MOVE_TARGET_FOES_AND_ALLY        0x0008
-#define MOVE_TARGET_USER                 0x0010
-#define MOVE_TARGET_USER_SIDE            0x0020
-#define MOVE_TARGET_ACTIVE_FIELD         0x0040
-#define MOVE_TARGET_OPPONENTS_FIELD      0x0080
-#define MOVE_TARGET_ALLY                 0x0100
-#define MOVE_TARGET_ACUPRESSURE          0x0200
-#define MOVE_TARGET_ME_FIRST             0x0400
+#define RANGE_SINGLE_TARGET           0
+#define RANGE_SINGLE_TARGET_SPECIAL   (1 << 0)
+#define RANGE_RANDOM_OPPONENT         (1 << 1)
+#define RANGE_ADJACENT_OPPONENTS      (1 << 2)
+#define RANGE_ALL_ADJACENT            (1 << 3)
+#define RANGE_USER                    (1 << 4)
+#define RANGE_USER_SIDE               (1 << 5)
+#define RANGE_FIELD                   (1 << 6)
+#define RANGE_OPPONENT_SIDE           (1 << 7)
+#define RANGE_ALLY                    (1 << 8)
+#define RANGE_SINGLE_TARGET_USER_SIDE (1 << 9)
+#define RANGE_FRONT                   (1 << 10)
 
 #endif

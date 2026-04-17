@@ -2,125 +2,8 @@
 .align 2
 .thumb
 
-.include "offset_def.s"
-
-.global calc_base_damage_hook
-calc_base_damage_hook:
-ldr r5, =calc_base_damage_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl CalcBaseDamage
-ldr r1, =calc_base_damage_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-calc_base_damage_return_address:
-.word 0
-
-
-.global CalcAccuracy_hook
-CalcAccuracy_hook:
-ldr r5, =CalcAccuracy_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl CalcAccuracy
-ldr r1, =CalcAccuracy_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-CalcAccuracy_return_address:
-.word 0
-
-
-.global CalcSpeed_hook
-CalcSpeed_hook:
-ldr r5, =CalcSpeed_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl CalcSpeed
-ldr r1, =CalcSpeed_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-CalcSpeed_return_address:
-.word 0
-
-
-.global CalcCritical_hook
-CalcCritical_hook:
-ldr r5, =CalcCritical_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl CalcCritical
-ldr r1, =CalcCritical_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-CalcCritical_return_address:
-.word 0
-
-
-.global MoldBreakerAbilityCheck_hook
-MoldBreakerAbilityCheck_hook:
-ldr r5, =MoldBreakerAbilityCheck_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl MoldBreakerAbilityCheck
-ldr r1, =MoldBreakerAbilityCheck_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-MoldBreakerAbilityCheck_return_address:
-.word 0
-
-
-.global CT_SwitchInMessageParamMake_hook
-CT_SwitchInMessageParamMake_hook:
-ldr r5, =CT_SwitchInMessageParamMake_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl CT_SwitchInMessageParamMake
-ldr r1, =CT_SwitchInMessageParamMake_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-CT_SwitchInMessageParamMake_return_address:
-.word 0
-
-
-.global CT_EncountSendOutMessageParamMake_hook
-CT_EncountSendOutMessageParamMake_hook:
-ldr r5, =CT_EncountSendOutMessageParamMake_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl CT_EncountSendOutMessageParamMake
-ldr r1, =CT_EncountSendOutMessageParamMake_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-CT_EncountSendOutMessageParamMake_return_address:
-.word 0
+.include "asm/include/interop_macros.inc"
+.include "asm/include/moves.inc"
 
 //形态变化恢复
 .global TryRevertFormChange_hook
@@ -135,7 +18,7 @@ mov r1, r6
 mov r0, r5
 bl TryRevertFormChange
 pop {r0-r2}
-ldr r3, =0x69B4 + Overlay_12_Start
+ldr r3, =0x69B4 + 0x022378C0|1
 bx r3
 
 //战斗结束
@@ -149,7 +32,7 @@ push {r0-r3}
 mov r0, r4
 bl BattleEndRevertFormChange
 pop {r0-r3}
-ldr r1, =0xB98 + Overlay_12_Start
+ldr r1, =0xB98 + 0x022378C0|1
 bx r1
 
 //mega
@@ -164,7 +47,7 @@ push {r0-r3}
 mov r0, r5
 bl LoadMegaIcon
 pop {r0-r3}
-ldr r2, =0x2F8A4 + Overlay_12_Start
+ldr r2, =0x2F8A4 + 0x022378C0|1
 bx r2
 
 //0802FBFC
@@ -178,7 +61,7 @@ bl LoadMegaButton
 pop {r1-r3}
 mov r0, #0x3
 str r0, [sp, #0x4]
-ldr r0, =0x2FC04 + Overlay_12_Start
+ldr r0, =0x2FC04 + 0x022378C0|1
 bx r0
 
 //08030644
@@ -195,11 +78,11 @@ bne end
 pop {r0-r3}
 cmp r4, #0x1
 blt sub_803065Ah
-ldr r3, =0x3064C + Overlay_12_Start
+ldr r3, =0x3064C + 0x022378C0|1
 bx r3
 
 sub_803065Ah:
-ldr r0, =0x3065A + Overlay_12_Start
+ldr r0, =0x3065A + 0x022378C0|1
 bx r0
 
 end:
@@ -305,13 +188,8 @@ ldr r1, [sp,#(4+8*4)] // pushed 8 registers, sp+4 originally
 bl ClearBattleMonFlags
 pop {r0-r7}
 
-add r1, r7, r6
-strb r2, [r1, r0]
-add r0, #1
-strb r2, [r1, r0]
-
-ldr r3, =0x0224E9A0 | 1
-bx r3
+ldr r0, =0x0224E70E | 1
+bx r0
 
 .pool
 
@@ -439,40 +317,6 @@ ldr r2, =0x02263298 | 1
 bx r2
 
 
-.global ServerDoTypeCalcMod_hook
-ServerDoTypeCalcMod_hook:
-ldr r5, =ServerDoTypeCalcMod_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl ServerDoTypeCalcMod
-ldr r1, =ServerDoTypeCalcMod_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-ServerDoTypeCalcMod_return_address:
-.word 0
-
-
-.global AITypeCalc_hook
-AITypeCalc_hook:
-ldr r5, =AITypeCalc_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl AITypeCalc
-ldr r1, =AITypeCalc_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-AITypeCalc_return_address:
-.word 0
-
-
 // r0 is sp, r1, is client already
 .global GrabMoveTypeForConversion2
 GrabMoveTypeForConversion2:
@@ -487,22 +331,6 @@ bx r0
 
 .pool
 
-
-.global CantEscape_hook
-CantEscape_hook:
-ldr r5, =CantEscape_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl CantEscape
-ldr r1, =CantEscape_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-CantEscape_return_address:
-.word 0
 
 .global target_select_inject_illusion_icon
 target_select_inject_illusion_icon:
@@ -542,23 +370,6 @@ bx r1
 
 .pool
 
-.global BattleSystem_CheckMoveEffect_hook
-BattleSystem_CheckMoveEffect_hook:
-ldr r5, =BattleSystem_CheckMoveEffect_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl BattleSystem_CheckMoveEffect
-ldr r1, =BattleSystem_CheckMoveEffect_return_address
-ldr r1, [r1]
-mov pc, r1
-
-.pool
-
-BattleSystem_CheckMoveEffect_return_address:
-.word 0
-.word 0
-
 
 .global ai_switch_ban_for_bind_hook
 ai_switch_ban_for_bind_hook:
@@ -593,35 +404,341 @@ bx r0
 .pool
 
 
-.global StruggleCheck_hook
-StruggleCheck_hook:
-ldr r5, =StruggleCheck_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl StruggleCheck
-ldr r1, =StruggleCheck_return_address
-ldr r1, [r1]
-mov pc, r1
+.global load_max_move_num_metronome
+load_max_move_num_metronome:
+mov r0, r7
+bl RollMetronomeMove
+ldr r1, =0x022408BA|1
+bx r1
+
+
+// Start missingno hooks
+
+.global BattleController_EmitHealthbarSlideIn_SkipInvalid
+BattleController_EmitHealthbarSlideIn_SkipInvalid:
+push {r0}
+ldr  r0, [sp, #8]
+mov  r1, r4
+bl   IsBattlerSlotValid
+pop  {r2}
+cmp  r0, #0
+beq  _returnTo02262B4A
+
+str r2, [sp, #0xc]
+mov r0, #0xc
+add r3, sp, #0x14
+strb r0, [r3]
+mov r0, #0xc0
+ldr  r6, =0x02262A64 | 1
+bx   r6
+
+_returnTo02262B4A:
+ldr r3, =0x02262B4A | 1;
+bx r3
 
 .pool
 
-StruggleCheck_return_address:
-.word 0
 
+.global ov12_0225D644_SkipInvalid
+ov12_0225D644_SkipInvalid:
+push {r3}
+bl 0x0223AB6C | 1
+mov r4, r0
 
-.global ov12_02251A28_hook
-ov12_02251A28_hook:
-ldr r5, =ov12_02251A28_return_address
-mov r6, lr
-str r6, [r5]
-pop {r5-r6}
-bl ov12_02251A28
-ldr r1, =ov12_02251A28_return_address
-ldr r1, [r1]
-mov pc, r1
+mov r1, r0
+ldr r0, [r5]
+bl IsBattlerSlotValid
+cmp  r0, #0
+beq _returnTo0225D780
+
+mov r1, r4
+ldr r0, [r5]
+bl 0x0223A7E8 | 1
+pop {r3}
+ldr r4, =0x0225D77E | 1
+bx r4
+
+_returnTo0225D780:
+ldr r0, [r5]
+mov r1, r4
+bl 0x0223A7E8 | 1
+add r1, r0, #0
+add r1, #0x88
+ldr r0, [r1]
+cmp r0, #0
+beq _returnTo0225D7F2
+
+push {r1}
+
+mov r1, #0
+bl 0x0223449C | 1
+
+pop {r1}
+ldr r0, [r1]
+cmp r0, #0
+beq _returnTo0225D7F2
+push {r1}
+
+mov r1, #0
+bl 0x02233EFC | 1
+
+pop {r1}
+ldr r0, [r1]
+cmp r0, #0
+beq _returnTo0225D7F2
+push {r1}
+
+mov r1, #0
+bl 0x022344C0 | 1
+
+pop {r1}
+ldr r0, [r1]
+cmp r0, #0
+beq _returnTo0225D7F2
+push {r1}
+
+mov r1, #0
+bl 0x022344D0 | 1
+
+pop {r1}
+b _returnTo0225D7F2
+
+_returnTo0225D7F2:
+pop {r3}
+ldr r4, =0x0225D7F2 | 1
+bx r4
 
 .pool
 
-ov12_02251A28_return_address:
-.word 0
+
+.global CT_PokemonEncountAppearSet_SkipInvalid_02259D10
+CT_PokemonEncountAppearSet_SkipInvalid_02259D10:
+push {r0-r3}
+mov r0, r7
+mov r2, #0x65
+lsl r2, r2, #2
+ldrb r1, [r6, r2]
+bl IsBattlerSlotValid
+cmp r0, #0
+pop {r0-r3}
+beq _returnTo0225BE39
+
+ldr r0, =0x0225B961 | 1
+add r1, r4, #0
+mov r2, #0
+bl 0x0200E320 | 1
+add sp, #0xc
+pop {r4, r5, r6, r7, pc}
+
+_returnTo0225BE39:
+ldr r0, =0x0225BE39 | 1
+add r1, r4, #0
+mov r2, #0
+bl 0x0200E320 | 1
+add sp, #0xc
+pop {r4, r5, r6, r7, pc}
+
+.pool
+
+
+.global CT_PokemonEncountAppearSet_SkipInvalid_02259D1E
+CT_PokemonEncountAppearSet_SkipInvalid_02259D1E:
+ldr r0, =0x0225BE39 | 1
+add r1, r4, #0
+mov r2, #0
+bl 0x0200E320 | 1
+add sp, #0xc
+pop {r4, r5, r6, r7, pc}
+
+.pool
+
+
+.global CT_PokemonEncountAppearSet_SkipInvalid_02259D2C
+CT_PokemonEncountAppearSet_SkipInvalid_02259D2C:
+ldr r0, =0x0225B961 | 1
+add r1, r4, #0
+mov r2, #0
+bl 0x0200E320 | 1
+add sp, #0xc
+pop {r4, r5, r6, r7, pc}
+
+.pool
+
+
+.global CT_PokemonEncountSet_SkipInvalid
+CT_PokemonEncountSet_SkipInvalid:
+push {r0-r3}
+ldr r0, [sp, #0x34]
+mov r2, #0x65
+lsl r2, r2, #2
+ldrb r1, [r6, r2]
+bl IsBattlerSlotValid
+cmp r0, #0
+pop {r0-r3}
+beq _returnTo0225B495
+
+ldr r0, =0x0225B7B9 | 1
+add r1, r4, #0
+mov r2, #0
+bl 0x0200E320 | 1
+ldr r3, =0x02259B82 | 1
+bx r3
+
+_returnTo0225B495:
+ldr r0, =0x0225B495 | 1
+add r1, r4, #0
+mov r2, #0
+bl 0x0200E320 | 1
+ldr r3, =0x02259B82 | 1
+bx r3
+
+.pool
+
+
+.global CT_PokemonAppearSet_SkipInvalid
+CT_PokemonAppearSet_SkipInvalid:
+push {r0-r3}
+ldr r0, [sp, #0x1c]
+ldr r2, [sp, #0x20]
+mov r3, #0x65
+lsl r3, r3, #2
+ldrb r1, [r2, r3]
+bl IsBattlerSlotValid
+cmp r0, #0
+pop {r0-r3}
+beq _returnTo0225C6C9
+
+ldr r0, =0x0225C18D | 1
+add r1, r5, #0
+mov r2, #0
+bl 0x0200E320 | 1
+ldr r3, =0x02259F10 | 1
+bx  r3
+
+_returnTo0225C6C9:
+ldr r0, =0x0225C6C9 | 1
+add r1, r5, #0
+mov r2, #0
+bl 0x0200E320 | 1
+ldr r3, =0x02259F10 | 1
+bx r3
+
+.pool
+
+
+.global ov12_0225C388_SkipInvalid
+ov12_0225C388_SkipInvalid:
+push {r4, lr}
+ldr  r0, [r4, #0]
+add  r1, r4, #0
+add  r1, #0x81
+ldrb r1, [r1]
+bl   IsBattlerSlotValid
+mov  r2, #1
+cmp  r0, #0
+beq  _returnTo0225C388
+mov  r2, #0
+_returnTo0225C388:
+ldr  r0, [r4, #4]
+mov  r1, #6
+ldr  r0, [r0, #32]
+bl   0x020087A4 | 1
+ldr  r0, [r4, #8]
+bl   0x02232A44 | 1
+pop  {r4}
+pop  {r3}
+mov  lr, r3
+ldr  r3, =0x0225C394 | 1
+bx   r3
+
+.pool
+
+
+.global ov12_0225C7AC_SkipInvalid
+ov12_0225C7AC_SkipInvalid:
+push {r4, lr}
+ldr  r0, [r4, #0]
+add  r1, r4, #0
+add  r1, #0x81
+ldrb r1, [r1]
+bl   IsBattlerSlotValid
+mov  r2, #1
+cmp  r0, #0
+beq  _returnTo0225C7AC
+mov  r2, #0
+_returnTo0225C7AC:
+ldr  r0, [r4, #4]
+mov  r1, #6
+ldr  r0, [r0, #32]
+bl   0x020087A4 | 1
+add  r0, r4, #0
+pop  {r4}
+pop  {r3}
+mov  lr, r3
+ldr  r3, =0x0225C7B4 | 1
+bx   r3
+
+.pool
+
+
+.global ov12_0225BB7C_SkipInvalid
+ov12_0225BB7C_SkipInvalid:
+push {r4, lr}
+ldr  r0, [r4, #0]
+add  r1, r4, #0
+add  r1, #0x81
+ldrb r1, [r1]
+bl   IsBattlerSlotValid
+mov  r2, #1
+cmp  r0, #0
+beq  _returnTo0225BB7C
+mov  r2, #0
+_returnTo0225BB7C:
+ldr  r0, [r4, #4]
+mov  r1, #6
+ldr  r0, [r0, #32]
+bl   0x020087A4 | 1
+ldr  r0, [r4, #8]
+bl   0x02232A44 | 1
+pop  {r4}
+pop  {r3}
+mov  lr, r3
+ldr  r3, =0x0225BB86 | 1
+bx   r3
+
+.pool
+
+
+.global ov12_0225BFC2_SkipInvalid
+ov12_0225BFC2_SkipInvalid:
+push {r4, lr}
+ldr  r0, [r4, #0]
+add  r1, r4, #0
+add  r1, #0x81
+ldrb r1, [r1]
+bl   IsBattlerSlotValid
+mov  r2, #1
+cmp  r0, #0
+beq  _returnTo0225BFC2
+mov  r2, #0
+_returnTo0225BFC2:
+ldr  r0, [r4, #4]
+mov  r1, #6
+ldr  r0, [r0, #32]
+bl   0x020087A4 | 1
+ldr  r0, [r4, #16]
+cmp  r0, #0
+beq  _returnTo0225BFD4
+bl   0x0221FE08 | 1
+mov  r0, #0
+str  r0, [r4, #16]
+_returnTo0225BFD4:
+pop  {r4}
+pop  {r3}
+mov  lr, r3
+ldr  r3, =0x0225BFD4 | 1
+bx   r3
+
+.pool
+
+// End missingno hooks

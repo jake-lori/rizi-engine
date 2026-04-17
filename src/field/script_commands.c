@@ -3,6 +3,8 @@
 #include "../../include/battle.h"
 #include "../../include/config.h"
 #include "../../include/debug.h"
+#include "../../include/constants/file.h"
+#include "../../include/message.h"
 #include "../../include/pokemon.h"
 #include "../../include/rtc.h"
 #include "../../include/save.h"
@@ -15,6 +17,7 @@
 #include "../../include/constants/moves.h"
 #include "../../include/constants/species.h"
 #include "../../include/constants/weather_numbers.h"
+#include "../../include/constants/generated/learnsets.h"
 
 /**
  *  @brief script command to give an egg adapted to set the hidden ability
@@ -181,8 +184,8 @@ BOOL ScrCmd_DaycareSanitizeMon(SCRIPTCONTEXT *ctx) {
     if (GetBoxMonData(daycareMon, MON_DATA_SPECIES, NULL) != SPECIES_NONE) {
         u32 inheriterMoves[4];
         u32 donorMoves[4];
-        u16 temp_egg_moves[EGG_MOVES_PER_MON];
-        u16 baby_egg_moves[EGG_MOVES_PER_MON];
+        u16 temp_egg_moves[MAX_EGG_MOVES];
+        u16 baby_egg_moves[MAX_EGG_MOVES];
         u8 potentialOverrideMoveSlot;
         u8 numEggMoves;
         u32 newMove;
@@ -271,12 +274,7 @@ BOOL ScrCmd_DaycareSanitizeMon(SCRIPTCONTEXT *ctx) {
             }
 
             if (potentialOverrideMoveSlot != 4) {
-                // Evil code to convert a PartyPokemon to a BoxPokemon
-                struct PartyPokemon *tempMon = AllocMonZeroed(11);
-                ZeroMonData(tempMon);
-                PokeParaSet(tempMon, GetBoxMonData(daycareMon, MON_DATA_SPECIES, NULL), 69, 32, FALSE, 0, 0, 0);
-
-                numEggMoves = LoadEggMoves(tempMon, baby_egg_moves);
+                numEggMoves = LoadEggMoves((struct PartyPokemon *)daycareMon, baby_egg_moves);
 
                 u32 numAvailableToInheritMoves = 0;
                 for (u8 i = 0; i < numEggMoves; i++) {

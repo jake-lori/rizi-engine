@@ -458,7 +458,11 @@
 .halfword ITEM_FULL_RESTORE
 
 .org 0x02000000 + 0xFAA08 //Underground Path
+<<<<<<< HEAD
 .halfword ITEM_X_SPECIAL
+=======
+.halfword ITEM_X_SP_ATK
+>>>>>>> upstream/main
 
 .org 0x02000000 + 0xFAA10 //R11
 .halfword ITEM_REVIVE

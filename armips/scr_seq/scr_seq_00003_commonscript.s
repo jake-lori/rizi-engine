@@ -87,6 +87,10 @@ scrdef scr_seq_0003_069
 scrdef scr_seq_0003_070
 scrdef scr_seq_0003_071
 scrdef scr_seq_0003_072_repels
+<<<<<<< HEAD
+=======
+scrdef scr_seq_0003_073_autobattle_testing
+>>>>>>> upstream/main
 scrdef_end
 
 scr_seq_0003_002:
@@ -661,14 +665,14 @@ _085F:
 
 _0892:
     buffer_players_name 0
-    buffer_item_name 1, VAR_SPECIAL_x8004
+    buffer_item_name_indef 1, VAR_SPECIAL_x8004
     npc_msg 28
     goto _08C9
 
 _08A3:
     compare VAR_SPECIAL_x8005, 1
     goto_if_gt _08BB
-    buffer_item_name 0, VAR_SPECIAL_x8004
+    buffer_item_name_indef 0, VAR_SPECIAL_x8004
     goto _08C0
 
 _08BB:
@@ -1235,7 +1239,7 @@ scr_seq_0003_019:
     end
 
 scr_seq_0003_020:
-    hasitem ITEM_BICYCLE, 1, VAR_SPECIAL_RESULT
+    hasitem ITEM_BIKE, 1, VAR_SPECIAL_RESULT
     compare VAR_SPECIAL_RESULT, 0
     goto_if_eq _1163
     scrcmd_609
@@ -1731,7 +1735,14 @@ scr_seq_0003_064:
     releaseall
     end
 
-
+scr_seq_0003_073_autobattle_testing:
+    play_se SEQ_SE_DP_SELECT
+    lockall
+    npc_msg 120
+    closemsg
+    trainer_battle 1, 0, 0, 0
+    releaseall
+    end
 
 
 

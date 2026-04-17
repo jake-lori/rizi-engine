@@ -6,8 +6,8 @@
 // uncomment the define to have the information written to 0x23DF000
 //#define DEBUG_ADJUSTED_ACCURACY
 
-// DEBUG_ADJUSTED_DAMAGE is used to debug the adjusted damage for testing abilities that affect damage output.
-//#define DEBUG_ADJUSTED_DAMAGE
+// DEBUG_DAMAGE_ROLLS is used to print all of the damage rolls
+//#define DEBUG_DAMAGE_ROLLS
 
 // DEBUG_HIDDEN_ABILITIES is used to debug hidden abilities by forcing all generated mons to have the hidden ability bit set.
 // uncomment the define to activate
@@ -35,6 +35,9 @@
 // GUARANTEE_CAPTURES guarantees captures
 //#define GUARANTEE_CAPTURES
 
+// Uncomment this when you want to enable all gimmicks while testing
+// #define DEBUG_ENABLE_ALL_GIMMICKS
+
 // DEBUG_SQRT prints debug information for the gpio sqrt function
 //#define DEBUG_SQRT
 
@@ -59,10 +62,61 @@
 // DEBUG_ALWAYS_OBEY will force all battlers to obey regardless of badges owned
 //#define DEBUG_ALWAYS_OBEY
 
+<<<<<<< HEAD
 // DEBUG_ENDTURN_LOGIC turns on a number of debug prints related to the end-turn logic
 //#define DEBUG_ENDTURN_LOGIC
 
 // NOCASH_GBA_PRINT swaps from desmume prints with the syscall to NO$GBA-style prints for use with i.e. melonDS
 //#define NOCASH_GBA_PRINT
+=======
+// DEBUG_SWITCH_IN_ABILITY_CHECK turns on a number of debug prints related to the switch-in logic
+// #define DEBUG_SWITCH_IN_ABILITY_CHECK
+
+// DEBUG_ENDTURN_LOGIC turns on a number of debug prints related to the end-turn logic
+//#define DEBUG_ENDTURN_LOGIC
+
+// DEBUG_BEFORE_MOVE_LOGIC turns on a number of debug prints related to the before-move logic
+//#define DEBUG_BEFORE_MOVE_LOGIC
+
+// DEBUG_MOVE_PERFORMANCE_LOGIC turns on a number of debug prints related to the move-performance logic
+// #define DEBUG_MOVE_PERFORMANCE_LOGIC
+
+// DEBUG_PRINT_HEAP_CREATION allows for debug prints on heap creation/deletion
+//#define DEBUG_PRINT_HEAP_CREATION
+
+// DEBUG_PRINT_HEAP_ALLOCATION allows for debug prints on memory allocation/free
+//#define DEBUG_PRINT_HEAP_ALLOCATION
+
+// DEBUG_DAMAGE_CALC shows debug information related to calculating damage.
+//#define DEBUG_DAMAGE_CALC
+
+//DEBUG_SPEED_CALC shows debug information related to calculating speed. It is very slow and laggy.
+// #define DEBUG_SPEED_CALC
+
+// DEBUG_ABILITY_POPUP shows debug information related to the Ability popup.
+//#define DEBUG_ABILITY_POPUP
+
+// FANCY_PRINT_NICKNAME defines in progress implementations that may not necessarily function.
+// #define FANCY_PRINT_NICKNAME
+
+// DEBUG_ENABLE_UNIMPLEMENTED_MOVES shows debug information if a chosen move is not implemented/dexited
+//#define DEBUG_ENABLE_UNIMPLEMENTED_MOVES
+
+// DEBUG_BOXMONDATA_EDITED_CASES shows debug information for GetBoxMonData/SetBoxMonData when its cases are edited
+//#define DEBUG_BOXMONDATA_EDITED_CASES
+
+// DEBUG_BATTLE_SCENARIOS enables test battle scenario loading system
+// When enabled, overrides any trainer battle parties with test scenarios
+// See src/test_battle.c for scenario definitions
+// recommend turning on DEBUG_AUTO_CONTINUE_GAME for test roms
+//#define DEBUG_BATTLE_SCENARIOS
+
+// DEBUG_AUTO_CONTINUE_GAME skips the title screen and start menu to automatically continue the game
+// when enabled, skips the intro movie and title screen to immediately continue the loaded save
+//#define DEBUG_AUTO_CONTINUE_GAME
+
+// NOCASH_GBA_PRINT swaps from desmume prints with the syscall to NO$GBA-style prints for use with i.e. melonDS
+#define NOCASH_GBA_PRINT
+>>>>>>> upstream/main
 
 #endif // DEBUG_H

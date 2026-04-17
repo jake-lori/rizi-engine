@@ -4,7 +4,13 @@
 #include "config.h"
 //#include "save.h"
 #include "types.h"
+<<<<<<< HEAD
 #include "trainer_data.h"
+=======
+#include "party_menu.h"
+#include "trainer_data.h"
+#include "window.h"
+>>>>>>> upstream/main
 
 #define POKEMON_GENDER_MALE 0
 #define POKEMON_GENDER_FEMALE 1
@@ -98,9 +104,59 @@
 #define GET_BOX_MON_NATURE_OVERRIDE(boxmon) (((GetBoxMonData(boxmon, MON_DATA_RESERVED_114, 0) & DUMMY_P2_2_NATURE_OVERRIDE) >> 1) & 0x1F)
 
 
-#define IS_SPECIES_PARADOX_FORM(species) ((species >= SPECIES_GREAT_TUSK && species <= SPECIES_IRON_THORNS) || (species == SPECIES_ROARING_MOON) || (species == SPECIES_IRON_VALIANT) || (species == SPECIES_WALKING_WAKE) \
-    || (species == SPECIES_IRON_LEAVES) || (species >= SPECIES_GOUGING_FIRE && species <= SPECIES_IRON_CROWN))
+// https://www.smogon.com/forums/threads/scarlet-violet-battle-mechanics-research.3709545/post-9900134
+#define IS_SPECIES_LEGENDARY(species) ((species == SPECIES_MEWTWO) || (species == SPECIES_LUGIA) || (species == SPECIES_HO_OH) \
+    || (species == SPECIES_KYOGRE) || (species == SPECIES_GROUDON) || (species == SPECIES_RAYQUAZA) || (species == SPECIES_DIALGA) \
+    || (species == SPECIES_PALKIA) || (species == SPECIES_GIRATINA) || (species == SPECIES_RESHIRAM) || (species == SPECIES_ZEKROM) \
+    || (species == SPECIES_KYUREM) || (species == SPECIES_XERNEAS) || (species == SPECIES_YVELTAL) || (species == SPECIES_ZYGARDE) \
+    || (species == SPECIES_COSMOG) || (species == SPECIES_COSMOEM) || (species == SPECIES_SOLGALEO) || (species == SPECIES_LUNALA) \
+    || (species == SPECIES_NECROZMA) || (species == SPECIES_ZACIAN) || (species == SPECIES_ZAMAZENTA) || (species == SPECIES_ETERNATUS) \
+    || (species == SPECIES_CALYREX) || (species == SPECIES_KORAIDON) || (species == SPECIES_MIRAIDON) || (species == SPECIES_TERAPAGOS))
 
+#ifdef VANILLA_MYTHICALS
+#define EXTRA_MYTHICALS(species) ( (species == SPECIES_SHIINOTIC) )
+#else
+#define EXTRA_MYTHICALS(species) ( (species == SPECIES_MARSHADOW) )/* || (species == OTHER_SPECIES_TO_ADD)*/)
+#endif
+
+#define IS_SPECIES_MYTHICAL(species) ((species == SPECIES_MEW) || (species == SPECIES_CELEBI) || (species == SPECIES_JIRACHI) \
+    || (species == SPECIES_DEOXYS) || (species == SPECIES_PHIONE) || (species == SPECIES_MANAPHY) || (species == SPECIES_DARKRAI) \
+    || (species == SPECIES_SHAYMIN) || (species == SPECIES_ARCEUS) || (species == SPECIES_VICTINI) || (species == SPECIES_KELDEO) \
+    || (species == SPECIES_MELOETTA) || (species == SPECIES_GENESECT) || (species == SPECIES_DIANCIE) || (species == SPECIES_HOOPA) \
+    || (species == SPECIES_VOLCANION) || (species == SPECIES_MAGEARNA) || (species == SPECIES_ZERAORA) \
+    || (species == SPECIES_MELTAN) || (species == SPECIES_MELMETAL) || (species == SPECIES_ZARUDE) || (species == SPECIES_PECHARUNT)\
+    || EXTRA_MYTHICALS(species))
+
+#define IS_SPECIES_SUBLEGEND(species) ((species == SPECIES_ARTICUNO) || (species == SPECIES_ZAPDOS) || (species == SPECIES_MOLTRES) \
+    || (species == SPECIES_RAIKOU) || (species == SPECIES_ENTEI) || (species == SPECIES_SUICUNE) || (species == SPECIES_REGIROCK) \
+    || (species == SPECIES_REGICE) || (species == SPECIES_REGISTEEL) || (species == SPECIES_LATIAS) || (species == SPECIES_LATIOS) \
+    || (species == SPECIES_UXIE) || (species == SPECIES_MESPRIT) || (species == SPECIES_AZELF) || (species == SPECIES_HEATRAN) \
+    || (species == SPECIES_REGIGIGAS) || (species == SPECIES_CRESSELIA) || (species == SPECIES_COBALION) || (species == SPECIES_TERRAKION) \
+    || (species == SPECIES_VIRIZION) || (species == SPECIES_TORNADUS) || (species == SPECIES_THUNDURUS) || (species == SPECIES_LANDORUS) \
+    || (species == SPECIES_TYPE_NULL) || (species == SPECIES_SILVALLY) || (species == SPECIES_TAPU_KOKO) || (species == SPECIES_TAPU_LELE) \
+    || (species == SPECIES_TAPU_BULU) || (species == SPECIES_TAPU_FINI) || (species == SPECIES_KUBFU) || (species == SPECIES_URSHIFU) \
+    || (species == SPECIES_REGIELEKI) || (species == SPECIES_REGIDRAGO) || (species == SPECIES_GLASTRIER) || (species == SPECIES_SPECTRIER) \
+    || (species == SPECIES_ENAMORUS) || (species == SPECIES_TING_LU) || (species == SPECIES_CHIEN_PAO) || (species == SPECIES_WO_CHIEN) \
+    || (species == SPECIES_CHI_YU) || (species == SPECIES_OGERPON) || (species == SPECIES_OKIDOGI) || (species == SPECIES_MUNKIDORI) \
+    || (species == SPECIES_FEZANDIPITI))
+
+#define IS_SPECIES_ULTRA_BEAST(species) ( (species == SPECIES_NIHILEGO) || (species == SPECIES_BUZZWOLE) || (species == SPECIES_PHEROMOSA) \
+    || (species == SPECIES_XURKITREE) || (species == SPECIES_CELESTEELA) || (species == SPECIES_KARTANA) || (species == SPECIES_GUZZLORD) \
+    || (species == SPECIES_POIPOLE) || (species == SPECIES_NAGANADEL) || (species == SPECIES_STAKATAKA) || (species == SPECIES_BLACEPHALON))
+
+#ifdef VANILLA_PARADOX_BOOSTER_ENERGY_BEHAVIOUR
+#define EXTRA_PARADOX_FORMS(species) 0
+#else
+#define EXTRA_PARADOX_FORMS(species) ( (species == SPECIES_GOUGING_FIRE) || (species == SPECIES_RAGING_BOLT) || \
+    (species == SPECIES_IRON_BOULDER) || (species == SPECIES_IRON_CROWN))
+#endif
+
+#define IS_SPECIES_PARADOX_FORM(species) ((species == SPECIES_GREAT_TUSK) || (species == SPECIES_SCREAM_TAIL) || (species == SPECIES_BRUTE_BONNET) \
+    || (species == SPECIES_FLUTTER_MANE) || (species == SPECIES_SLITHER_WING) || (species == SPECIES_SANDY_SHOCKS) || (species == SPECIES_IRON_TREADS) \
+    || (species == SPECIES_IRON_BUNDLE) || (species == SPECIES_IRON_HANDS) || (species == SPECIES_IRON_JUGULIS) || (species == SPECIES_IRON_MOTH) \
+    || (species == SPECIES_IRON_THORNS) || (species == SPECIES_ROARING_MOON) || (species == SPECIES_IRON_VALIANT) || (species == SPECIES_WALKING_WAKE) \
+    || (species == SPECIES_IRON_LEAVES) \
+    || EXTRA_PARADOX_FORMS(species))
 
 // personal narc fields
 enum
@@ -168,9 +224,11 @@ typedef struct {
     /* 0x00 */ u16 species;
     /* 0x02 */ u16 heldItem;
     /* 0x04 */ u32 otID; // low 16: visible; high 16: secret
-    /* 0x08 */ u32 exp;
+    /* 0x08 */ u32 exp:21; // low 21 are all that is used!
+               u32 unused:10;
+               u32 abilityMSB:1; // msb of previous experience field is the exp
     /* 0x0C */ u8 friendship;
-    /* 0x0D */ u8 ability;
+    /* 0x0D */ u8 ability; // taking a bit from exp
     /* 0x0E */ u8 markings; // circle, triangle, square, heart, star, diamond
     /* 0x0F */ u8 originLanguage;
     /* 0x10 */ u8 hpEV;
@@ -506,44 +564,71 @@ struct OVERWORLD_TAG
     u16 callback_params;
 };
 
+typedef struct MAP_EVENTS MAP_EVENTS;
+typedef struct FIELD_PLAYER_AVATAR FIELD_PLAYER_AVATAR;
+typedef struct LocalMapObject LocalMapObject;
 
-// frick new formes
-struct PLIST_DATA
-{
-    /* 0x00 */ struct Party *pp;
-    /* 0x04 */ void *myitem;
-    /* 0x08 */ void *mailblock;
-    /* 0x0C */ void *cfg;
-    /* 0x10 */ void *tvwk;
-    /* 0x14 */ void *reg;
-    /* 0x18 */ void *scwk;
-    /* 0x1C */ void *fsys;
-               void *padsmth;
-    /* 0x20+4 */ u8 mode;
-    /* 0x21+4 */ u8 type;
-    /* 0x22+4 */ u8 ret_sel;
-    /* 0x23+4 */ u8 ret_mode;
-    /* 0x24+4 */ u16 item; // this is actually 0x28
-    /* 0x26+4 */ u16 move;
-    /* 0x28+4 */ u8 movepos;
-    /* 0x29+4 */ u8 con_mode;
-    /* 0x2A+4 */ u8 con_type;
-    /* 0x2B+4 */ u8 con_rank;
-    /* 0x2C+4 */ u8 in_num[6];
-    /* 0x32+4 */ u8 in_min:4;
-                 u8 in_max:4;
-    /* 0x33+4 */ u8 in_lv;
-    /* 0x34+4 */ s32 lv_cnt;
-    /* 0x38+4 */ u16 after_mons;
-    /* 0x3C+4 */ s32 shinka_cond;
-};
+typedef struct Location {
+    int mapId;
+    int warpId;
+    int x;
+    int z;
+    int direction;
+} Location;
 
-struct PLIST_WORK
-{
-    u8 padding_x0[0x654];
-    struct PLIST_DATA *dat;
-    u8 padding_x658[0xC65-0x658];
-    u8 pos;
+typedef struct FollowMon {
+    LocalMapObject *mapObject;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+    u32 species;
+    u8 gender;
+    u8 unk15;
+    u8 active;
+    u8 shiny;
+    u16 forme;
+    u16 dummy;
+    u32 unk1C;
+} FollowMon;
+
+typedef struct FieldSystem {
+    /*  0x0 */ u8 unk0[0x8];
+    /*  0x8 */ void *bg_config;
+    /*  0xc */ void *savedata;//SAVEDATA* savedata;
+    /* 0x10 */ void *taskman;//TaskManager* taskman;
+    /* 0x14 */ MAP_EVENTS* map_events; // what we are here for
+    /* 0x18 */ u8 unk18[0x8];
+    /* 0x20 */ Location * location;
+    /* 0x24 */ u8 unk24[0xC];
+    /* 0x30 */ void */*MAPMATRIX**/ map_matrix;
+    /* 0x34 */ u8 unk34[0x8];
+    /* 0x3C */ void */*MapObjectMan**/ mapObjectMan;
+    /* 0x40 */ FIELD_PLAYER_AVATAR *playerAvatar;
+    /* 0x44 */ u8 unk44[0x8];
+    /* 0x4C */ void * fog_data;
+    /* 0x50 */ u8 unk50[0x5C];
+    /* 0xAC */ u32 unkAC;
+    /* 0xB0 */ u8 unkB0[0x4];
+    /* 0xB4 */ s64 unkB4;
+    /* 0xBC */ u8 unkBC[0x28];
+    /* 0xE4 */ FollowMon followMon;
+    //u8 unk104[4];
+    //void *unk108;//struct FieldSystemUnk108 *unk108;
+    //u8 filler_10C[8];
+    //void *unk114;//struct UnkFsysSub_114* unk114;
+    //void *bugContest;//BUGCONTEST* bugContest;
+    //u8 unk11C[0xC];
+} FieldSystem; // size: 0x128
+
+
+struct IconFormChangeData {
+    int state;
+    int effectTimer;
+    int duration;
+    int species;
+    int fileId;
+    int partyMonIndex;
+    void *particleSystem; // SPLEmitter from pokeheartgold
 };
 
 
@@ -591,8 +676,18 @@ typedef enum EvoMethod
     EVO_LEVEL_NATURE_LOW_KEY,
     EVO_AMOUNT_OF_CRITICAL_HITS,
     EVO_HURT_IN_BATTLE_AMOUNT,
-    //EVO_DARK_SCROLL,  // implemented through a forme-change-esque cut scene
-    //EVO_WATER_SCROLL, // implemented through a forme-change-esque cut scene
+    EVO_SPIN_CLOCKWISE_LESS_THAN_5_SECONDS_DAY,             // Vanilla Cream
+    EVO_SPIN_COUNTERCLOCKWISE_LESS_THAN_5_SECONDS_DAY,      // Ruby Cream
+    EVO_SPIN_CLOCKWISE_LESS_THAN_5_SECONDS_NIGHT,           // Matcha Cream
+    EVO_SPIN_COUNTERCLOCKWISE_MORE_THAN_5_SECONDS_NIGHT,    // Mint Cream
+    EVO_SPIN_CLOCKWISE_MORE_THAN_5_SECONDS_NIGHT,           // Lemon Cream
+    EVO_SPIN_COUNTERCLOCKWISE_LESS_THAN_5_SECONDS_NIGHT,    // Salted Cream
+    EVO_SPIN_COUNTERCLOCKWISE_MORE_THAN_5_SECONDS_DAY,      // Ruby Swirl
+    EVO_SPIN_CLOCKWISE_MORE_THAN_5_SECONDS_DAY,             // Caramel Swirl
+    EVO_SPIN_MORE_THAN_10_SECONDS_EVENING,                  // Rainbow Swirl
+    EVO_FORM_ARGUMENT,  // Yamask, Stantler, Basculin, Primeape, Bisharp, Gimmighoul
+    EVO_LETS_GO, // Pawmo, Bramblin, Rellor https://xcancel.com/Sibuna_Switch/status/1678027317891694593
+    EVO_DUMMY, // Inaccessible evolution methods
 } EvoMethod;
 
 typedef enum {
@@ -619,15 +714,7 @@ typedef struct
     u32 personal_rnd;
 } MON_PIC;
 
-struct FormData
-{
-    u16 species;
-
-    u16 form_no:15;
-    u16 need_rev:1;
-
-    u16 file;
-};
+#define NEEDS_REVERSION 0x8000
 
 typedef struct EncounterInfo
 {
@@ -708,13 +795,19 @@ enum
 #define NATURE_CAREFUL (23)
 #define NATURE_QUIRKY  (24)
 
+#define FLAVOR_SPICY  0
+#define FLAVOR_DRY    1
+#define FLAVOR_SWEET  2
+#define FLAVOR_BITTER 3
+#define FLAVOR_SOUR   4
+
+#define FLAVOR_START FLAVOR_SPICY
+#define FLAVOR_MAX   5
 
 #define MAX_EVOS_PER_POKE (9)
 
 
 #define gDimorphismTable ((u8 *)(0x020FECAE))
-#define EGG_MOVES_PER_MON 16 // need to go through later and make this editable
-#define NUM_EGG_MOVES_TOTAL 8000
 
 
 /**Trainer Data File Bitfield**/
@@ -738,9 +831,8 @@ enum
 #define TRAINER_DATA_EXTRA_TYPE_SPEED 0x10
 #define TRAINER_DATA_EXTRA_TYPE_SP_ATK 0x20
 #define TRAINER_DATA_EXTRA_TYPE_SP_DEF 0x40
-#define TRAINER_DATA_EXTRA_TYPE_TYPES 0x80
-#define TRAINER_DATA_EXTRA_TYPE_PP_COUNTS 0x100
-#define TRAINER_DATA_EXTRA_TYPE_NICKNAME 0x200
+#define TRAINER_DATA_EXTRA_TYPE_PP_COUNTS 0x80
+#define TRAINER_DATA_EXTRA_TYPE_NICKNAME 0x100
 
 // kinda weird, specifically tracked in the RAM
 typedef struct WildEncounterWork
@@ -979,13 +1071,6 @@ u8 LONG_CALL GetNatureFromPersonality(u32 personality);
 u8 LONG_CALL GetMonNature(struct PartyPokemon *pp);
 
 /**
- *  @brief intialize a BoxPokemon's moves depending on level and such that are already set
- *
- *  @param boxmon BoxPokemon whose moves to initialize
- */
-void LONG_CALL FillInBoxMonLearnset(struct BoxPokemon *boxmon);
-
-/**
  *  @brief get data from personal narc for a species
  *
  *  @param species species index to grab from the narc for
@@ -1019,19 +1104,11 @@ void LONG_CALL BoxMonInit(struct BoxPokemon *boxmon);
 void LONG_CALL GiratinaBoxPokemonFormChange(struct BoxPokemon *bp);
 
 /**
- *  @brief check if the gracidea flower can be used on a PartyPokemon
- *
- *  @param pp PartyPokemon to check for gracidea validity
- *  @return TRUE if the gracidea can be used on the PartyPokemon
- */
-BOOL LONG_CALL GrashideaFeasibleCheck(struct PartyPokemon *pp);
-
-/**
  *  @brief load in the party overlay
  *
  *  @param wk poke list work
  */
-void LONG_CALL PokeList_FormDemoOverlayLoad(struct PLIST_WORK *wk);
+void LONG_CALL PokeList_FormDemoOverlayLoad(struct PartyMenu *wk);
 
 /**
  *  @brief add a PartyPokemon to an available slot in the Party
@@ -1074,6 +1151,15 @@ u32 LONG_CALL PokeParaLevelExpGet(struct PartyPokemon *pp);
  *  @return TRUE if the PartyPokemon should level up; FALSE otherwise
  */
 u32 LONG_CALL PokeLevelUpCheck(struct PartyPokemon *pp);
+
+/**
+ *  @brief grab the level of a species given its experience
+ *
+ *  @param species species index to calculate for
+ *  @param exp total experience the species has
+ *  @return level the species is at with given experience
+ */
+u32 LONG_CALL CalcLevelBySpeciesAndExp(u32 species, u32 exp);
 
 /**
  *  @brief check if a Party has a specific species
@@ -1414,7 +1500,15 @@ u16 LONG_CALL GetSpeciesBasedOnForm(int mons_no, int form_no);
  *  @param mons_no species that has already been adjusted by form number by GetSpeciesBasedOnForm
  *  @return base species
  */
-u16 LONG_CALL GetOriginalSpeciesBasedOnAdjustedForm(u32 mons_no);
+u16 LONG_CALL GetBaseSpeciesFromAdjustedForm(u32 mons_no);
+
+/**
+ *  @brief pass adjusted species and return form of the base species it applies to
+ *
+ *  @param mons_no species that has already been adjusted by form number by GetSpeciesBasedOnForm
+ *  @return form of adjusted species
+ */
+u16 LONG_CALL GetFormFromAdjustedForm(u32 mons_no);
 
 /**
  *  @brief pass adjusted species and return form of the base species it applies to
@@ -1542,6 +1636,23 @@ BOOL LONG_CALL HandleBoxPokemonFormeChanges(struct BoxPokemon* bp);
 BOOL LONG_CALL CanUseRevealGlass(struct PartyPokemon *pp);
 
 /**
+ *  @brief check if a certain type of nectar can be used on a PartyPokemon
+ *
+ *  @param pp PartyPokemon to check the nectar against
+ *  @param nectar Nectar item id to check for
+ *  @return TRUE if nectar can be used; FALSE otherwise
+ */
+BOOL LONG_CALL CanUseNectar(struct PartyPokemon *pp, u16 nectar);
+
+/**
+ *  @brief check if the Gracidea can be used on a PartyPokemon
+ *
+ *  @param pp PartyPokemon to check the nectar against
+ *  @return TRUE if Gracidea can be used; FALSE otherwise
+ */
+BOOL LONG_CALL Mon_CanUseGracidea(struct PartyPokemon *mon);
+
+/**
  *  @brief check if DNA splicers can be used, return position in party if so
  *
  *  @param pp PartyPokemon to check for
@@ -1551,12 +1662,20 @@ BOOL LONG_CALL CanUseRevealGlass(struct PartyPokemon *pp);
 u32 LONG_CALL CanUseDNASplicersGrabSplicerPos(struct PartyPokemon *pp, struct Party *party);
 
 /**
+ *  @brief check if a rotom catalog can be used on a PartyPokemon
+ *
+ *  @param pp PartyPokemon to check reveal glass against
+ *  @return TRUE if rotom catalog can be used; FALSE otherwise
+ */
+BOOL CanUseRotomCatalog(struct PartyPokemon *pp);
+
+/**
  *  @brief see if an item changes attributes of the pokémon or not
  *
  *  @param wk work structure
  *  @param dat data structure
  */
-u32 LONG_CALL UseItemMonAttrChangeCheck(struct PLIST_WORK *wk, void *dat);
+u32 LONG_CALL UseItemMonAttrChangeCheck(struct PartyMenu *wk, void *dat);
 
 /**
  *  @brief modify PokeListProc_End to increase party size so that when Reshiram/Zekrom are added back from DNA Splicers there are no crashes
@@ -1615,7 +1734,7 @@ BOOL LONG_CALL Party_UpdateDeerlingSeasonForm(struct Party *party);
 //BOOL LONG_CALL Party_TryResetShaymin(struct Party *party, int min_max, const struct RTCTime *time);
 
 /**
- *  @brief load egg moves to dest and return amount of egg moves
+ *  @brief load egg moves to dest and return amount of egg moves. reads from data/generated/EggLearnsets.c
  *
  *  @param pokemon PartyPokemon to grab egg moves for
  *  @param dest destination for the array of egg moves
@@ -1724,6 +1843,21 @@ bool8 LONG_CALL RevertFormChange(struct PartyPokemon *pp, u16 species, u8 form_n
 void LONG_CALL ClearMonMoves(struct PartyPokemon *pokemon);
 
 /**
+ *  @brief get level cap from the script variable defined by LEVEL_CAP_VARIABLE
+ *
+ *  @return level cap from LEVEL_CAP_VARIABLE script variable
+ */
+u32 LONG_CALL GetLevelCap(void);
+
+/**
+ *  @brief check if the level is at or above the level cap defined in LEVEL_CAP_VARIABLE
+ *
+ *  @param level level to check
+ *  @return TRUE if level >= level cap; FALSE otherwise
+ */
+u32 LONG_CALL IsLevelAtLevelCap(u32 level);
+
+/**
  *  @brief grab the nature of a BoxPokemon factoring in the nature mint override field
  *
  *  @param boxMon BoxPokemon whose nature to grab
@@ -1759,6 +1893,8 @@ u32 LONG_CALL GenerateShinyPIDKeepSubstructuresIntact(u32 otId, u32 pid);
  */
 u32 LONG_CALL GetMoveData(u16 id, u32 field);
 
+BOOL LONG_CALL IsMoveUnimplemented(u16 move);
+
 BOOL LONG_CALL Mon_UpdateRotomForm(struct PartyPokemon *mon, int form, int defaultSlot);
 
 void LONG_CALL Mon_UpdateShayminForm(struct PartyPokemon *mon, int form);
@@ -1767,4 +1903,24 @@ void LONG_CALL Daycare_GetBothBoxMonsPtr(Daycare *dayCare, struct BoxPokemon **b
 
 BOOL LONG_CALL CanUseItemOnPokemon(struct PartyPokemon *mon, u16 itemID, s32 moveIdx, u32 heapID);
 
+<<<<<<< HEAD
+=======
+void LONG_CALL correct_zacian_zamazenta_kyurem_moves_for_form(struct PartyPokemon *param, unsigned int expected_form, int *a3);
+
+void LONG_CALL ChangeToBattleForm(struct PartyPokemon *pp);
+
+void LONG_CALL MonApplyFriendshipMod(struct PartyPokemon *mon, u8 kind, u16 location);
+
+u8 LONG_CALL GetMoveMaxPP(u16 moveId, u8 ppUps);
+
+void LONG_CALL ApplyMonMoodModifier(struct PartyPokemon *mon, int modifierId);
+
+s8 LONG_CALL GetFlavorPreferenceFromPID(u32 personality, int flavor);
+
+BOOL Mon_UpdateRotomForm(struct PartyPokemon *mon, int form, int defaultSlot);
+
+BOOL LONG_CALL CanUseItemOnMonInParty(struct Party *party, u16 itemID, s32 partyIdx, s32 moveIdx, u32 heapID);
+
+
+>>>>>>> upstream/main
 #endif

@@ -2,6 +2,7 @@
 #define CONSTANTS_HOLD_ITEM_EFFECTS_H
 
 #define HOLD_EFFECT_NONE                                 0
+#define SOUBI_NONE                                       HOLD_EFFECT_NONE
 #define HOLD_EFFECT_HP_RESTORE                           1
 #define HOLD_EFFECT_GIRATINA_BOOST                       2
 #define HOLD_EFFECT_DIALGA_BOOST                         3
@@ -55,7 +56,7 @@
 #define HOLD_EFFECT_EXP_SHARE                           51
 #define HOLD_EFFECT_SOMETIMES_PRIORITY                  52
 #define HOLD_EFFECT_FRIENDSHIP_UP                       53
-#define HOLD_EFFECT_HEAL_INFATUATION                    54
+#define HOLD_EFFECT_HEAL_MENTAL_CONDITIONS              54
 #define HOLD_EFFECT_CHOICE_ATK                          55
 #define HOLD_EFFECT_SOMETIMES_FLINCH                    56
 #define HOLD_EFFECT_STRENGTHEN_BUG                      57
@@ -224,5 +225,6 @@
 #define HOLD_EFFECT_CORNERSTONE_MASK                   217
 #define HOLD_EFFECT_WELLSPRING_MASK                    218
 #define HOLD_EFFECT_HEARTHFLAME_MASK                   219
+#define HOLD_EFFECT_POWERING_UP_MOVE_ONCE              220
 
 #endif

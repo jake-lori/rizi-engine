@@ -1383,4 +1383,205 @@
     .long (((\arg_0 - .) / 4) - 1)
     .endm
 
+<<<<<<< HEAD
+=======
+    .macro TryMegaOrUltraBurstDuringPursuit arg_0
+    .long 253
+    .long (((\arg_0 - .) / 4) - 1)
+    .endm
+
+    .macro CalcConfusionDamage arg_0
+    .long 254
+    .long (((\arg_0 - .) / 4) - 1)
+    .endm
+
+    .macro CheckCanActivateDefiantOrCompetitive arg_0, arg_1, arg_2
+    .long 255
+    .long (((\arg_0 - .) / 4) - 3)
+    .long (((\arg_1 - .) / 4) - 2)
+    .long (((\arg_2 - .) / 4) - 1)
+    .endm
+
+    .macro JumpToCurrentEntryHazard arg_0, arg_1, arg_2, arg_3, arg_4, arg_5
+    .long 256
+    .long \arg_0
+    .long (((\arg_1 - .) / 4) - 5)
+    .long (((\arg_2 - .) / 4) - 4)
+    .long (((\arg_3 - .) / 4) - 3)
+    .long (((\arg_4 - .) / 4) - 2)
+    .long (((\arg_5 - .) / 4) - 1)
+    .endm
+
+    .macro AddEntryHazardToQueue arg_0, arg_1
+    .long 257
+    .long \arg_0
+    .long \arg_1
+    .endm
+
+    .macro RemoveEntryHazardFromQueue arg_0, arg_1
+    .long 258
+    .long \arg_0
+    .long \arg_1
+    .endm
+
+    .macro CheckShouldNotTurnOffMultiStatAnim battlerCategory, label
+    // need to skip the stat animation turning off in case of defiant and competitive so the animation shows properly
+    CheckAbility CHECK_OPCODE_HAVE, \battlerCategory, ABILITY_DEFIANT, \label
+    CheckAbility CHECK_OPCODE_HAVE, \battlerCategory, ABILITY_COMPETITIVE, \label
+    .endm
+
+    .macro CheckProtectContactMoves
+    .long 259
+    .endm
+
+    .macro TryIncinerate arg_0
+    .long 260
+    .long (((\arg_0 - .) / 4) - 1)
+    .endm
+
+    .macro AddType arg_0
+    .long 261
+    .long \arg_0
+    .endm
+
+    .macro TryAuroraVeil
+    .long 262
+    .endm
+
+    .macro ClearAuroraVeil
+    .long 263
+    .endm
+
+    .macro StrengthSapCalc
+    .long 264
+    .endm
+
+    .macro CheckTargetIsPartner arg_0
+    .long 265
+    .long (((\arg_0 - .) / 4) - 1)
+    .endm
+
+    .macro ClearSmog
+    .long 266
+    .endm
+
+    .macro GoToIfThirdType arg_0, arg_1, arg_2
+    .long 267
+    .long \arg_0
+    .long \arg_1
+    .long (((\arg_2 - .) / 4) - 1)
+    .endm
+
+    .macro GoToIfTerastallized arg_0, arg_1
+    .long 268
+    .long \arg_0
+    .long (((\arg_1 - .) / 4) - 1)
+    .endm
+
+    .macro HandleRoost arg_0
+    .long 269
+    .long \arg_0
+    .endm
+
+    .macro HandleSoak arg_0
+    .long 270
+    .long \arg_0
+    .endm
+
+    .macro HandleMagicPowder arg_0
+    .long 271
+    .long \arg_0
+    .endm
+
+    .macro HandleForestsCurse arg_0
+    .long 272
+    .long \arg_0
+    .endm
+
+    .macro HandleTrickOrTreat arg_0
+    .long 273
+    .long \arg_0
+    .endm
+
+    .macro HandleBurnUp arg_0
+    .long 274
+    .long \arg_0
+    .endm
+
+    .macro HandleDoubleShock arg_0
+    .long 275
+    .long \arg_0
+    .endm
+
+    .macro StuffCheeks arg_0
+    .long 276
+    .long (((\arg_0 - .) / 4) - 1)
+    .endm
+
+    .macro SetMoveConditionFlag arg_0, arg_1
+    .long 277
+    .long \arg_0
+    .long \arg_1
+    .endm
+
+    .macro AbilityPopup arg_0:req, arg_1=-1
+    .long 278
+    .long \arg_0
+    .long \arg_1
+    .endm
+
+    .macro ActivateParadoxAbility arg_0
+    .long 279
+    .long \arg_0
+    .endm
+
+    .macro ResetParadoxAbility arg_0
+    .long 280
+    .long \arg_0
+    .endm
+
+    .macro SetCurrentMoveSwitchingStatus arg_0
+    .long 281
+    .long \arg_0
+    .endm
+
+    .macro TrySynchronizeStatus arg_0
+    .long 282
+    .long (((\arg_0 - .) / 4) - 1)
+    .endm
+
+    .macro TryCureStatusBerry arg_0, arg_1
+    .long 283
+    .long \arg_0
+    .long (((\arg_1 - .) / 4) - 1)
+    .endm
+
+    .macro BatchUpdateHealthBar
+    .long 284
+    .endm
+
+    .macro BatchUpdateHealthBarValue
+    .long 285
+    .endm
+
+    .macro BatchFollowupMessage arg_0
+    .long 286
+    .long \arg_0
+    .endm
+
+    .macro BatchEffectivenessMessage arg_0, arg_1, arg_2
+    .long 287
+    .long \arg_0
+    .long \arg_1
+    .long (((\arg_2 - .) / 4) - 1)
+    .endm
+
+    .equ BASE_ENGINE_BTL_SCR_CMDS_MAX, 287
+
+    // .macro YourCustomCommand
+    // .long (BASE_ENGINE_BTL_SCR_CMDS_MAX + 1)
+    // .endm
+
+
+>>>>>>> upstream/main
 .endif

@@ -7499,7 +7499,11 @@ trainerdata 243, "Katie"
     endparty
 
 trainerdata 244, "Lance"
+<<<<<<< HEAD
     trainermontype TRAINER_DATA_TYPE_ITEMS | TRAINER_DATA_TYPE_MOVES | TRAINER_DATA_TYPE_ABILITY | TRAINER_DATA_TYPE_IV_EV_SET | TRAINER_DATA_TYPE_NATURE_SET
+=======
+    trainermontype TRAINER_DATA_TYPE_ITEMS | TRAINER_DATA_TYPE_MOVES
+>>>>>>> upstream/main
     trainerclass TRAINERCLASS_CHAMPION
     nummons 6
     item ITEM_MEGA_RING
@@ -7611,9 +7615,15 @@ trainerdata 244, "Lance"
 trainerdata 245, "Will"
     trainermontype TRAINER_DATA_TYPE_ITEMS | TRAINER_DATA_TYPE_MOVES
     trainerclass TRAINERCLASS_ELITE_FOUR_WILL
+<<<<<<< HEAD
     nummons 6
     item ITEM_MEGA_RING
     item ITEM_NONE
+=======
+    nummons 5
+    item ITEM_FULL_RESTORE
+    item ITEM_FULL_RESTORE
+>>>>>>> upstream/main
     item ITEM_NONE
     item ITEM_NONE
     aiflags F_PRIORITIZE_SUPER_EFFECTIVE | F_EVALUATE_ATTACKS | F_EXPERT_ATTACKS | 0
